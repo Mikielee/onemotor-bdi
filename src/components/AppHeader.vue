@@ -1,28 +1,26 @@
 <script setup>
-import logoGroup from '../assets/logo/bdi-logo-group.png'
-import logoGroup1 from '../assets/logo/bdi-logo-group1.png'
-import logoVector from '../assets/logo/bdi-logo-vector.png'
-import carIcon from '../assets/icons/car.png'
-import menuIcon from '../assets/icons/menu.png'
 </script>
 
 <template>
   <header class="bdi-header">
     <a class="bdi-logo" href="/" aria-label="Budget Direct Insurance home">
       <span class="bdi-logo-tagline">It pays to choose</span>
-      <span class="bdi-logo-stack">
-        <img :src="logoGroup1" alt="" class="bdi-logo-group1" />
-        <img :src="logoGroup" alt="" class="bdi-logo-group" />
-        <img :src="logoVector" alt="Budget Direct Insurance" class="bdi-logo-vector" />
+      <span class="bdi-logo-wordmark" aria-hidden="true">
+        <span class="bdi-logo-line">
+          <span class="dark">Bu</span><span class="red">dget</span>
+        </span>
+        <span class="bdi-logo-line">
+          <span class="dark">Di</span><span class="red">rect</span><sup class="reg">®</sup>
+        </span>
       </span>
     </a>
     <div class="bdi-header-right">
       <button class="bdi-product-chip" type="button">
-        <img :src="carIcon" alt="" class="bdi-chip-icon" />
+        <i class="pi pi-car bdi-chip-icon" aria-hidden="true"></i>
         <span>Car Insurance</span>
       </button>
       <button class="bdi-menu" type="button" aria-label="Open menu">
-        <img :src="menuIcon" alt="" />
+        <i class="pi pi-bars" aria-hidden="true"></i>
       </button>
     </div>
   </header>
@@ -45,6 +43,7 @@ import menuIcon from '../assets/icons/menu.png'
   text-decoration: none;
   color: inherit;
   gap: 2px;
+  line-height: 1;
 }
 
 .bdi-logo-tagline {
@@ -55,18 +54,26 @@ import menuIcon from '../assets/icons/menu.png'
   margin-bottom: 2px;
 }
 
-.bdi-logo-stack {
-  position: relative;
-  display: inline-block;
-  width: 94px;
-  height: 50px;
+.bdi-logo-wordmark {
+  font-family: var(--bdi-font);
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  display: inline-flex;
+  flex-direction: column;
+  line-height: 0.95;
 }
-.bdi-logo-stack img {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
+.bdi-logo-line {
+  font-size: 20px;
+  display: inline-block;
+}
+.bdi-logo-line .dark { color: var(--bdi-carbon); }
+.bdi-logo-line .red { color: var(--bdi-red); }
+.bdi-logo-line .reg {
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--bdi-red);
+  margin-left: 1px;
+  vertical-align: super;
 }
 
 .bdi-header-right {
@@ -90,8 +97,8 @@ import menuIcon from '../assets/icons/menu.png'
 }
 
 .bdi-chip-icon {
-  width: 16px;
-  height: 16px;
+  font-size: 16px;
+  color: var(--bdi-red);
 }
 
 .bdi-menu {
@@ -103,6 +110,8 @@ import menuIcon from '../assets/icons/menu.png'
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  cursor: pointer;
+  color: var(--bdi-carbon);
 }
-.bdi-menu img { width: 24px; height: 24px; }
+.bdi-menu .pi { font-size: 20px; }
 </style>
