@@ -9,20 +9,28 @@ import './style.css'
 import App from './App.vue'
 import router from './router'
 
+// BDI primary CTA / focus / selected state is GREEN #009A44 (Secondary/Green in Figma tokens).
+// Red is reserved for the logo wordmark and error states only.
 const BDIPreset = definePreset(Aura, {
   semantic: {
     primary: {
-      50: '#FFF1F0',
-      100: '#FFD9D5',
-      200: '#FBA59E',
-      300: '#F37267',
-      400: '#E94B3E',
-      500: '#DA291C',
-      600: '#B82217',
-      700: '#931B12',
-      800: '#6E140E',
-      900: '#4A0D09',
-      950: '#2B0805',
+      50: '#E6F5EC',
+      100: '#C3E7CF',
+      200: '#80CC9C',
+      300: '#4DB677',
+      400: '#26A55B',
+      500: '#009A44',
+      600: '#00863B',
+      700: '#006E30',
+      800: '#005525',
+      900: '#003D1B',
+      950: '#002612',
+    },
+    focusRing: {
+      width: '2px',
+      style: 'solid',
+      color: '#009A44',
+      offset: '2px',
     },
   },
 })
@@ -37,7 +45,7 @@ app.use(PrimeVue, {
       darkModeSelector: '.bdi-dark',
     },
   },
-  ripple: true,
+  ripple: false,
 })
 
 app.mount('#app')

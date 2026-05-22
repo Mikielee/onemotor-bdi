@@ -8,6 +8,7 @@ const props = defineProps({
   to: { type: [String, Number, Object], default: null },
   label: { type: String, default: 'Next' },
   hideBack: { type: Boolean, default: false },
+  price: { type: String, default: '' },
 })
 
 const router = useRouter()
@@ -32,10 +33,20 @@ function onBack() {
 </script>
 
 <template>
-  <div class="bdi-sticky-next">
-    <div class="bdi-actions">
-      <button v-if="showBack" type="button" class="bdi-back" aria-label="Go back" @click="onBack">
-        <span class="bdi-back-arrow" aria-hidden="true">‹</span>
+  <div class="sticky-cta">
+    <div v-if="price" class="sticky-price">
+      <span class="sticky-price-amt">{{ price }}</span>
+      <span class="sticky-price-unit">per year (incl. GST)</span>
+    </div>
+    <div class="sticky-actions">
+      <button
+        v-if="showBack"
+        type="button"
+        class="sticky-back"
+        aria-label="Go back"
+        @click="onBack"
+      >
+        <i class="pi pi-chevron-left" aria-hidden="true"></i>
       </button>
       <Button
         class="bdi-primary"
@@ -48,26 +59,43 @@ function onBack() {
 </template>
 
 <style scoped>
-.bdi-sticky-next {
-  position: fixed;
-  left: 50%;
-  transform: translateX(-50%);
-  bottom: 0;
-  width: 100%;
-  max-width: var(--bdi-max-mobile);
+/* Sticky CTA sits in the normal document flow (above the footer) per
+   Figma 3902-1286: sticky bar then footer, never overlapping. */
+.sticky-cta {
   background: #fff;
   padding: 16px;
   border-top: 1px solid var(--bdi-grey-200);
-  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 24px -16px 0 -16px;
+  border-top-left-radius: 8px;
+  border-top-right-radius: 8px;
 }
 
-.bdi-actions {
+.sticky-price {
   display: flex;
-  gap: 16px;
+  flex-direction: column;
+  gap: 2px;
+  padding: 0 0 4px 0;
+}
+.sticky-price-amt {
+  font-size: 22px;
+  font-weight: 900;
+  color: var(--bdi-carbon);
+}
+.sticky-price-unit {
+  font-size: 13px;
+  color: var(--bdi-grey-600);
+}
+
+.sticky-actions {
+  display: flex;
+  gap: 12px;
   align-items: center;
 }
 
-.bdi-back {
+.sticky-back {
   flex: 0 0 72px;
   width: 72px;
   height: 48px;
@@ -77,25 +105,14 @@ function onBack() {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 24px;
-  line-height: 1;
   color: var(--bdi-carbon);
   cursor: pointer;
   padding: 0;
 }
+.sticky-back:hover { background: var(--bdi-grey-100); }
+.sticky-back .pi { font-size: 16px; }
 
-.bdi-back:hover { background: var(--bdi-grey-100); }
-
-.bdi-back-arrow {
-  display: inline-block;
-  font-size: 28px;
-  line-height: 1;
-  font-weight: 700;
-  margin-top: -2px;
-}
-
-.bdi-actions :deep(.p-button.bdi-primary) {
+.sticky-actions :deep(.p-button.bdi-primary) {
   flex: 1 1 auto;
-  width: auto;
 }
 </style>

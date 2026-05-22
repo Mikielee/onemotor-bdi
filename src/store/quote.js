@@ -3,6 +3,7 @@ import { reactive, readonly } from 'vue'
 const state = reactive({
   coverType: null,
   coverStartDate: null,
+  coverEndDate: null,
   carYear: null,
   carMake: null,
   carModel: null,
@@ -39,7 +40,9 @@ const state = reactive({
     promoCode: '',
   },
   hasAdditionalDrivers: null,
+  hasOutsideDrivers: null,
   additionalDrivers: [],
+  driveLess: null,
   optionalBenefits: [],
 })
 

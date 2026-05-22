@@ -1,96 +1,259 @@
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, reactive } from 'vue'
+import InputText from 'primevue/inputtext'
+import DatePicker from 'primevue/datepicker'
+import Select from 'primevue/select'
 import StickyNext from '../components/StickyNext.vue'
 import { useQuote } from '../store/quote'
 
 const { quote, mutable } = useQuote()
 
-const hasAdditional = ref(quote.hasAdditionalDrivers ?? null)
-const drivers = ref([...(quote.additionalDrivers || [])])
+// Figma 4124-13337 — three scenarios:
+//   1. Immediately Proceed (No household + No outside drivers).
+//   2. One Household member.
+//   3. Two+ Household members (list view with Edit + Remove).
 
-function setHas(v) {
-  hasAdditional.value = v
+const local = reactive({
+  hasHousehold: quote.hasAdditionalDrivers ?? null,
+  hasOutside: quote.hasOutsideDrivers ?? null,
+  drivers: [...(quote.additionalDrivers || [])],
+  showForm: false,
+  editingIndex: null,
+  draft: blankDriver(),
+})
+
+const relationshipOptions = [
+  { label: 'Spouse', value: 'Spouse' },
+  { label: 'Parent', value: 'Parent' },
+  { label: 'Child', value: 'Child' },
+  { label: 'Sibling', value: 'Sibling' },
+  { label: 'Other household member', value: 'Other' },
+]
+
+const claimChips = [0, 1, 2, '3+']
+const notAtFaultChips = [0, 1, 2, 3, '4+']
+
+function blankDriver() {
+  return {
+    relationship: '',
+    name: '',
+    nric: '',
+    dob: null,
+    atFault: null,
+    notAtFault: null,
+  }
+}
+
+function setHousehold(v) {
+  local.hasHousehold = v
   mutable.hasAdditionalDrivers = v
-  if (v === false) {
-    drivers.value = []
+  if (!v) {
+    local.drivers = []
+    local.showForm = false
     mutable.additionalDrivers = []
   }
 }
 
-function addDriver() {
-  drivers.value.push({
-    id: Date.now(),
-    name: '',
-  })
-  mutable.additionalDrivers = [...drivers.value]
+function setOutside(v) {
+  local.hasOutside = v
+  mutable.hasOutsideDrivers = v
 }
 
-function removeDriver(id) {
-  drivers.value = drivers.value.filter((d) => d.id !== id)
-  mutable.additionalDrivers = [...drivers.value]
+function startAdd() {
+  local.draft = blankDriver()
+  local.editingIndex = null
+  local.showForm = true
+}
+
+function editDriver(i) {
+  local.draft = { ...local.drivers[i] }
+  local.editingIndex = i
+  local.showForm = true
+}
+
+function removeDriver(i) {
+  local.drivers.splice(i, 1)
+  mutable.additionalDrivers = [...local.drivers]
+}
+
+function cancelForm() {
+  local.showForm = false
+  local.draft = blankDriver()
+  local.editingIndex = null
+}
+
+const canSave = computed(() => {
+  const d = local.draft
+  return Boolean(d.relationship && d.name && d.nric && d.dob && d.atFault !== null && d.notAtFault !== null)
+})
+
+function saveDriver() {
+  if (!canSave.value) return
+  if (local.editingIndex !== null) {
+    local.drivers[local.editingIndex] = { ...local.draft }
+  } else {
+    local.drivers.push({ ...local.draft })
+  }
+  mutable.additionalDrivers = [...local.drivers]
+  cancelForm()
 }
 
 const canContinue = computed(() => {
-  if (hasAdditional.value === false) return true
-  if (hasAdditional.value === true) return drivers.value.length >= 1
-  return false
+  if (local.hasHousehold === null || local.hasOutside === null) return false
+  if (local.hasHousehold === true && local.drivers.length === 0) return false
+  return true
 })
+
+const summary = (d) => {
+  const last4 = d.nric ? d.nric.slice(-4) : ''
+  return `${d.relationship} · ${d.name}${last4 ? ' · …' + last4 : ''}`
+}
+
+const claimsSummary = (d) =>
+  `${d.notAtFault} not-at-fault · ${d.atFault} at-fault`
 </script>
 
 <template>
   <section class="step">
-    <h1 class="bdi-section-title">Who drives your car?</h1>
+    <h1 class="bdi-section-title">Who else drives your car?</h1>
 
-    <div class="field">
-      <p class="field-label">
-        Does anyone else <strong>in your household</strong> drive this car?
-      </p>
+    <div class="block">
+      <p class="bdi-field-label">Does anyone else in your household drive this car?</p>
       <div class="yes-no">
         <button
           type="button"
           class="yn-button"
-          :class="{ 'is-selected': hasAdditional === true }"
-          @click="setHas(true)"
+          :class="{ 'is-selected': local.hasHousehold === true }"
+          @click="setHousehold(true)"
         >Yes</button>
         <button
           type="button"
           class="yn-button"
-          :class="{ 'is-selected': hasAdditional === false }"
-          @click="setHas(false)"
+          :class="{ 'is-selected': local.hasHousehold === false }"
+          @click="setHousehold(false)"
         >No</button>
       </div>
     </div>
 
-    <div v-if="hasAdditional === true" class="drivers-section">
-      <p class="section-label">Please tell us about the driver</p>
-
-      <div v-if="drivers.length === 0" class="empty-state">
-        <p class="empty-text">No additional drivers added yet.</p>
-        <button type="button" class="add-driver" @click="addDriver">
-          + Add a driver
-        </button>
-      </div>
-
-      <div v-else class="driver-list">
-        <div v-for="(d, i) in drivers" :key="d.id" class="driver-card">
-          <div class="driver-row">
-            <p class="driver-title">Driver {{ i + 1 }}</p>
-            <button type="button" class="driver-remove" @click="removeDriver(d.id)">Remove</button>
-          </div>
-          <p class="driver-placeholder">Driver details will be captured here.</p>
+    <template v-if="local.hasHousehold === true">
+      <div v-for="(d, i) in local.drivers" :key="i" class="driver-card">
+        <div class="driver-row">
+          <p class="driver-summary">{{ summary(d) }}</p>
+          <button type="button" class="icon-btn" aria-label="Edit driver" @click="editDriver(i)">
+            <i class="pi pi-pencil"></i>
+          </button>
+          <button type="button" class="icon-btn" aria-label="Remove driver" @click="removeDriver(i)">
+            <i class="pi pi-trash"></i>
+          </button>
         </div>
-        <button type="button" class="add-driver secondary" @click="addDriver">
-          + Add another driver
-        </button>
+        <p class="driver-meta">{{ claimsSummary(d) }}</p>
       </div>
 
-      <div class="warning">
-        <p class="warning-title">Authorised Driver option cover</p>
-        <ul>
-          <li>A household member of the Main Driver who is not named as a Named Driver will not be covered under your Policy.</li>
-          <li>Any unnamed driver who was involved in 2 or more accidents where he or she is partially or fully at fault within the 3 years preceding the start date of the Policy Term will not be covered under your Policy.</li>
-        </ul>
+      <div v-if="local.showForm" class="form-card">
+        <p class="form-title">{{ local.editingIndex !== null ? 'Edit driver' : 'Please tell us about the driver' }}</p>
+
+        <div class="field">
+          <label class="bdi-field-label">Relationship to main driver</label>
+          <Select
+            v-model="local.draft.relationship"
+            :options="relationshipOptions"
+            option-label="label"
+            option-value="value"
+            placeholder="Choose relationship"
+            fluid
+          />
+        </div>
+
+        <div class="field">
+          <label class="bdi-field-label">Full name (as per NRIC)</label>
+          <InputText v-model="local.draft.name" placeholder="John Doe" fluid />
+        </div>
+
+        <div class="field">
+          <label class="bdi-field-label">NRIC / FIN</label>
+          <InputText v-model="local.draft.nric" placeholder="SXXXXXXXA" fluid />
+        </div>
+
+        <div class="field">
+          <label class="bdi-field-label">Date of birth</label>
+          <DatePicker
+            v-model="local.draft.dob"
+            date-format="dd/mm/yy"
+            placeholder="DD/MM/YYYY"
+            show-icon
+            fluid
+          />
+        </div>
+
+        <div class="field">
+          <label class="bdi-field-label">At-fault accidents/claims in past 3 years</label>
+          <div class="chip-row">
+            <button
+              v-for="c in claimChips"
+              :key="c"
+              type="button"
+              class="chip"
+              :class="{ 'is-on': local.draft.atFault === c }"
+              @click="local.draft.atFault = c"
+            >{{ c }}</button>
+          </div>
+        </div>
+
+        <div class="field">
+          <label class="bdi-field-label">Not-at-fault accidents/claims in past 3 years</label>
+          <div class="chip-row">
+            <button
+              v-for="c in notAtFaultChips"
+              :key="c"
+              type="button"
+              class="chip"
+              :class="{ 'is-on': local.draft.notAtFault === c }"
+              @click="local.draft.notAtFault = c"
+            >{{ c }}</button>
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button type="button" class="form-cancel" @click="cancelForm">Cancel</button>
+          <button type="button" class="form-save" :disabled="!canSave" @click="saveDriver">
+            Save driver
+          </button>
+        </div>
       </div>
+
+      <button v-if="!local.showForm" type="button" class="add-driver" @click="startAdd">
+        <i class="pi pi-plus"></i>
+        Add a driver
+      </button>
+
+      <p class="callout">
+        <i class="pi pi-info-circle" aria-hidden="true"></i>
+        <span>Additional Young and/or Inexperienced Driver Excess of $2,500 (before GST) applies if the
+          car is driven by anyone under 25 or with less than 2 years' valid driving licence, and not
+          named under the policy.</span>
+      </p>
+    </template>
+
+    <div v-if="local.hasHousehold !== null" class="block">
+      <p class="bdi-field-label">Does anyone outside your household drive this car?</p>
+      <div class="yes-no">
+        <button
+          type="button"
+          class="yn-button"
+          :class="{ 'is-selected': local.hasOutside === true }"
+          @click="setOutside(true)"
+        >Yes</button>
+        <button
+          type="button"
+          class="yn-button"
+          :class="{ 'is-selected': local.hasOutside === false }"
+          @click="setOutside(false)"
+        >No</button>
+      </div>
+      <p v-if="local.hasOutside === true" class="bdi-help">
+        Unnamed household members are not covered. Any unnamed driver involved in 2 or more at-fault
+        accidents in the 3 years before the policy starts is excluded automatically.
+      </p>
     </div>
 
     <StickyNext :disabled="!canContinue" />
@@ -102,19 +265,10 @@ const canContinue = computed(() => {
   padding-top: 24px;
   display: flex;
   flex-direction: column;
-  gap: 24px;
-  padding-bottom: 140px;
+  gap: 16px;
 }
 
-.field { display: flex; flex-direction: column; gap: 8px; }
-.field-label {
-  margin: 0;
-  font-size: 16px;
-  font-weight: 500;
-  color: var(--bdi-carbon);
-  line-height: 1.4;
-}
-.field-label strong { font-weight: 700; }
+.block { display: flex; flex-direction: column; gap: 8px; }
 
 .yes-no { display: flex; gap: 8px; }
 .yn-button {
@@ -122,124 +276,146 @@ const canContinue = computed(() => {
   background: #fff;
   border: 1px solid var(--bdi-grey-300);
   border-radius: var(--bdi-radius-card);
-  padding: 16px;
-  min-height: 56px;
-  font-size: 16px;
+  padding: 12px 16px;
+  font-size: 14px;
   font-weight: 700;
   color: var(--bdi-carbon);
   cursor: pointer;
   font-family: var(--bdi-font);
+  min-height: 48px;
 }
 .yn-button.is-selected {
   border-color: var(--bdi-green);
   box-shadow: 0 0 0 1px var(--bdi-green) inset;
-}
-
-.drivers-section { display: flex; flex-direction: column; gap: 16px; }
-
-.section-label {
-  margin: 0;
-  font-size: 16px;
-  font-weight: 700;
-  color: var(--bdi-carbon);
-}
-
-.empty-state {
-  background: #fff;
-  border: 1px dashed var(--bdi-grey-300);
-  border-radius: var(--bdi-radius-card);
-  padding: 24px;
-  text-align: center;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  align-items: center;
-}
-.empty-text {
-  margin: 0;
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--bdi-grey-600);
-}
-
-.add-driver {
-  background: var(--bdi-green);
-  color: #fff;
-  border: 0;
-  border-radius: var(--bdi-radius-card);
-  padding: 12px 24px;
-  font-family: var(--bdi-font);
-  font-weight: 700;
-  font-size: 16px;
-  cursor: pointer;
-}
-.add-driver.secondary {
-  background: #fff;
   color: var(--bdi-green);
-  border: 1px solid var(--bdi-green);
 }
 
-.driver-list { display: flex; flex-direction: column; gap: 12px; }
 .driver-card {
   background: #fff;
-  border: 1px solid var(--bdi-grey-300);
+  border: 1px solid var(--bdi-grey-200);
+  border-radius: var(--bdi-radius-card);
+  padding: 12px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.driver-row { display: flex; align-items: center; gap: 8px; }
+.driver-summary { margin: 0; flex: 1; font-size: 14px; font-weight: 900; color: var(--bdi-carbon); }
+.driver-meta { margin: 0; font-size: 12px; color: var(--bdi-grey-600); }
+.icon-btn {
+  background: transparent;
+  border: 0;
+  color: var(--bdi-grey-600);
+  cursor: pointer;
+  padding: 4px;
+}
+.icon-btn:hover { color: var(--bdi-carbon); }
+
+.form-card {
+  background: #fff;
+  border: 1px solid var(--bdi-grey-200);
   border-radius: var(--bdi-radius-card);
   padding: 16px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 16px;
 }
-.driver-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-.driver-title {
+.form-title {
   margin: 0;
   font-size: 16px;
   font-weight: 900;
   color: var(--bdi-carbon);
 }
-.driver-remove {
-  background: transparent;
+.field { display: flex; flex-direction: column; }
+
+.chip-row { display: flex; gap: 8px; flex-wrap: wrap; }
+.chip {
+  background: #fff;
+  border: 1px solid var(--bdi-grey-300);
+  border-radius: var(--bdi-radius-card);
+  padding: 8px 14px;
+  font-family: var(--bdi-font);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--bdi-carbon);
+  cursor: pointer;
+  min-width: 48px;
+}
+.chip.is-on {
+  border-color: var(--bdi-green);
+  box-shadow: 0 0 0 1px var(--bdi-green) inset;
+  color: var(--bdi-green);
+}
+
+.form-actions { display: flex; gap: 8px; }
+.form-cancel,
+.form-save {
+  flex: 1;
+  border-radius: var(--bdi-radius-card);
+  padding: 12px 16px;
+  font-family: var(--bdi-font);
+  font-weight: 700;
+  font-size: 16px;
+  cursor: pointer;
+  min-height: 48px;
+}
+.form-cancel {
+  background: #fff;
+  border: 1px solid var(--bdi-carbon);
+  color: var(--bdi-carbon);
+}
+.form-save {
+  background: var(--bdi-green);
   border: 0;
-  color: var(--bdi-red);
+  color: #fff;
+}
+.form-save:disabled {
+  background: var(--bdi-grey-200);
+  color: var(--bdi-grey-600);
+  cursor: not-allowed;
+}
+
+.add-driver {
+  background: #fff;
+  border: 1px dashed var(--bdi-grey-500);
+  border-radius: var(--bdi-radius-card);
+  padding: 12px 16px;
+  color: var(--bdi-carbon);
   font-family: var(--bdi-font);
   font-weight: 700;
   font-size: 14px;
   cursor: pointer;
-  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 48px;
 }
-.driver-placeholder {
+.add-driver:hover { border-color: var(--bdi-green); color: var(--bdi-green); }
+
+.callout {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
   margin: 0;
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--bdi-grey-600);
+  background: var(--bdi-grey-100);
+  border: 1px solid var(--bdi-grey-200);
+  border-radius: var(--bdi-radius-card);
+  padding: 12px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--bdi-carbon);
+}
+.callout .pi {
+  color: var(--bdi-cyan);
+  flex-shrink: 0;
+  margin-top: 1px;
 }
 
-.warning {
-  background: var(--bdi-grey-100);
-  border: 1px solid rgba(242, 169, 0, 0.3);
-  border-radius: var(--bdi-radius-card);
-  padding: 12px 16px;
-}
-.warning-title {
-  margin: 0 0 8px 0;
-  font-size: 16px;
-  font-weight: 700;
-  color: var(--bdi-carbon);
-  line-height: 1.4;
-}
-.warning ul {
-  margin: 0;
-  padding-left: 20px;
-}
-.warning li {
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--bdi-carbon);
+.bdi-help {
+  margin: 4px 0 0 0;
+  font-size: 12px;
+  color: var(--bdi-grey-600);
   line-height: 1.5;
-  margin-bottom: 6px;
 }
-.warning li:last-child { margin-bottom: 0; }
 </style>

@@ -164,8 +164,7 @@ const canContinue = computed(() =>
   padding-top: 24px;
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  padding-bottom: 120px;
+  gap: 20px;
 }
 
 .field { display: flex; flex-direction: column; gap: 8px; }
@@ -231,18 +230,5 @@ const canContinue = computed(() =>
   box-shadow: 0 0 0 1px var(--bdi-green) inset;
 }
 
-.step :deep(.bdi-select) { width: 100%; }
-.step :deep(.bdi-select .p-select) {
-  background: #fff;
-  border: 1px solid var(--bdi-grey-300);
-  border-radius: var(--bdi-radius-card);
-  min-height: 56px;
-}
-.step :deep(.bdi-select .p-select-label) {
-  font-family: var(--bdi-font);
-  color: var(--bdi-carbon);
-  font-size: 16px;
-  padding: 16px;
-  font-weight: 500;
-}
+/* Field styling comes from global style.css — no Select overrides needed. */
 </style>

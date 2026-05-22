@@ -120,8 +120,7 @@ const canContinue = computed(() =>
   padding-top: 24px;
   display: flex;
   flex-direction: column;
-  gap: 24px;
-  padding-bottom: 120px;
+  gap: 20px;
 }
 
 .field { display: flex; flex-direction: column; gap: 8px; }

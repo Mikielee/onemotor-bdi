@@ -5,27 +5,14 @@ import { useQuote } from '../store/quote'
 
 const { quote, mutable } = useQuote()
 
+// NCD Protector is NOT shown to users — internal memory rule from product.
 const benefits = [
-  {
-    id: 'ncd-protector-plus',
-    title: 'NCD Protector Plus',
-    price: '$8.11',
-    blurb: 'Protect your No Claim Discount so a single at-fault claim does not reset it.',
-    recommended: true,
-  },
   {
     id: 'breakdown-assistance',
     title: '24-hour Breakdown Assistance',
     price: '$8.11',
     blurb: 'Round-the-clock help if your car breaks down, including tow-to-workshop service.',
     recommended: true,
-  },
-  {
-    id: 'medical-expenses',
-    title: 'Medical Expenses',
-    price: '$8.11',
-    blurb: 'Covers medical costs for you and your passengers following a covered accident.',
-    recommended: false,
   },
   {
     id: 'personal-accident',
@@ -89,7 +76,6 @@ const canContinue = computed(() => true)
   display: flex;
   flex-direction: column;
   gap: 24px;
-  padding-bottom: 140px;
 }
 
 .benefits {

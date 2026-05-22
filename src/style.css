@@ -1,24 +1,27 @@
 :root {
-  /* BDI brand tokens — sourced from Figma design system */
-  --bdi-red: #DA291C;
-  --bdi-carbon: #333F48;
-  --bdi-green: #009A44;
-  --bdi-cyan: #008EAA;
+  /* BDI brand tokens — sourced from Figma BDI Design System */
+  --bdi-red: #DA291C;          /* Logo + error only */
+  --bdi-carbon: #333F48;       /* Primary text, outlines */
+  --bdi-green: #009A44;        /* CTA, selected, focus */
+  --bdi-cyan: #008EAA;         /* Links */
   --bdi-white: #FFFFFF;
-  --bdi-grey-100: #F5F5F5;
-  --bdi-grey-200: #E4E4E4;
-  --bdi-grey-300: #DADADA;
+  --bdi-grey-100: #F5F5F5;     /* Chip bg, callout bg */
+  --bdi-grey-200: #E4E4E4;     /* Borders */
+  --bdi-grey-300: #DADADA;     /* Input borders, inactive */
   --bdi-grey-500: #999999;
-  --bdi-grey-600: #858585;
+  --bdi-grey-600: #858585;     /* Secondary text */
   --bdi-bg: #F7F7F7;
 
-  /* Typography (Nunito Sans as Museo Sans alternative) */
+  --bdi-error-bg: #FDECEA;
+
   --bdi-font: "Nunito Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 
-  /* Layout */
   --bdi-max-mobile: 420px;
   --bdi-radius-card: 8px;
   --bdi-radius-pill: 30px;
+
+  /* Field token: every input / dropdown / picker uses this. */
+  --bdi-field-height: 56px;
 }
 
 html, body {
@@ -40,10 +43,7 @@ html, body {
 
 * { box-sizing: border-box; }
 
-a {
-  color: var(--bdi-cyan);
-  text-decoration: none;
-}
+a { color: var(--bdi-cyan); text-decoration: none; }
 a:hover { text-decoration: underline; }
 
 h1, h2, h3, h4 {
@@ -76,30 +76,55 @@ button {
   }
 }
 
-/* Main Button — sourced from Figma BDI Design System (Main Button component set).
-   Active: white bg + carbon text + drop-shadow. Disabled: grey #E4E4E4 + grey-600 text, no shadow. */
+/* ============================================================
+   Main Button — Figma "Main Button" component.
+   Enabled active (primary CTA): green #009A44 + white text.
+   Disabled: grey #E4E4E4 + grey-600 text.
+   Secondary/Cancel: white + drop-shadow + carbon text.
+   ============================================================ */
 .p-button.bdi-primary {
-  background: #fff;
+  background: var(--bdi-green);
   border: 0;
-  color: var(--bdi-carbon);
+  color: #fff;
   font-weight: 700;
   border-radius: var(--bdi-radius-card);
   padding: 12px 16px;
   width: 100%;
   font-size: 16px;
-  box-shadow: 0 1px 0.5px rgba(0, 0, 0, 0.05), 0 2px 2px rgba(0, 0, 0, 0.1);
+  height: 48px;
+  min-height: 48px;
 }
 .p-button.bdi-primary:not(:disabled):hover {
-  background: var(--bdi-grey-100);
+  background: #00863B;
+}
+.p-button.bdi-primary:not(:disabled):active {
+  background: #006E30;
 }
 .p-button.bdi-primary:disabled {
   background: var(--bdi-grey-200);
   color: var(--bdi-grey-600);
   opacity: 1;
   cursor: not-allowed;
-  box-shadow: none;
 }
 
+.p-button.bdi-secondary {
+  background: #fff;
+  border: 1px solid var(--bdi-carbon);
+  color: var(--bdi-carbon);
+  font-weight: 700;
+  border-radius: var(--bdi-radius-card);
+  padding: 12px 16px;
+  font-size: 16px;
+  height: 48px;
+  min-height: 48px;
+}
+.p-button.bdi-secondary:not(:disabled):hover {
+  background: var(--bdi-grey-100);
+}
+
+/* ============================================================
+   Section headings + helper text.
+   ============================================================ */
 .bdi-section-title {
   font-weight: 900;
   font-size: 20px;
@@ -111,5 +136,130 @@ button {
 .bdi-help {
   color: var(--bdi-grey-600);
   font-size: 14px;
+  margin: 0;
+}
+
+.bdi-field-label {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--bdi-carbon);
+  line-height: 1.4;
+  margin: 0 0 8px 0;
+  display: block;
+}
+
+/* ============================================================
+   Inputs + Selects — Figma states:
+     default border: #DADADA (Grey-300)
+     filled / focus border: #009A44 (Green)
+     error border + text: #DA291C
+   Every field is 56px tall. PrimeVue components are overridden
+   here once so views don't repeat themselves.
+   ============================================================ */
+.p-inputtext,
+.p-select,
+.p-datepicker-input,
+.p-textarea {
+  font-family: var(--bdi-font);
+  background: #fff;
+  border: 1px solid var(--bdi-grey-300);
+  border-radius: var(--bdi-radius-card);
+  color: var(--bdi-carbon);
+  font-size: 16px;
+  font-weight: 500;
+  padding: 0 16px;
+  min-height: var(--bdi-field-height);
+  width: 100%;
+  transition: border-color 120ms ease;
+}
+
+.p-inputtext::placeholder,
+.p-textarea::placeholder {
+  color: var(--bdi-grey-600);
+  font-weight: 500;
+}
+
+.p-inputtext:enabled:hover,
+.p-select:not(.p-disabled):hover,
+.p-textarea:enabled:hover {
+  border-color: var(--bdi-grey-500);
+}
+
+.p-inputtext:enabled:focus,
+.p-select:not(.p-disabled).p-focus,
+.p-select:not(.p-disabled):focus-within,
+.p-textarea:enabled:focus {
+  border-color: var(--bdi-green);
+  outline: 0;
+  box-shadow: none;
+}
+
+.p-inputtext.p-invalid,
+.p-select.p-invalid,
+.p-textarea.p-invalid {
+  border-color: var(--bdi-red);
+}
+
+.p-select {
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+}
+.p-select.p-disabled { background: var(--bdi-grey-100); border-color: var(--bdi-grey-300); }
+.p-select .p-select-label {
+  padding: 0 !important;
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--bdi-carbon);
+}
+.p-select .p-select-label.p-placeholder { color: var(--bdi-grey-600); }
+.p-select .p-select-dropdown {
+  color: var(--bdi-carbon);
+  width: auto;
+  background: transparent;
+}
+
+.p-select-overlay {
+  border: 1px solid var(--bdi-grey-200);
+  border-radius: var(--bdi-radius-card);
+  background: #fff;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+}
+.p-select-list { padding: 4px 0; }
+.p-select-option {
+  font-family: var(--bdi-font);
+  color: var(--bdi-carbon);
+  font-size: 16px;
+  padding: 12px 16px;
+}
+.p-select-option.p-focus { background: var(--bdi-grey-100); }
+.p-select-option.p-select-option-selected {
+  background: #fff;
+  color: var(--bdi-green);
+  font-weight: 700;
+}
+.p-select-option.p-select-option-selected.p-focus {
+  background: #E6F5EC;
+}
+
+.p-datepicker-input-icon-container { width: 100%; }
+.p-datepicker-input { padding-right: 48px; }
+.p-datepicker-trigger,
+.p-datepicker-input-icon {
+  color: var(--bdi-carbon);
+  background: transparent;
+  border: 0;
+}
+
+/* ============================================================
+   Inline error banner (used on field validation errors).
+   ============================================================ */
+.bdi-inline-error {
+  background: var(--bdi-error-bg);
+  border: 1px solid var(--bdi-red);
+  color: var(--bdi-red);
+  border-radius: var(--bdi-radius-card);
+  padding: 10px 12px;
+  font-size: 13px;
   margin: 0;
 }
