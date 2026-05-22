@@ -1,0 +1,61 @@
+import { reactive, readonly } from 'vue'
+
+const state = reactive({
+  coverType: null,
+  coverStartDate: null,
+  carYear: null,
+  carMake: null,
+  carModel: null,
+  carUsage: null,
+  annualDistance: null,
+  mainDriver: {
+    name: '',
+    nric: '',
+    dob: null,
+    gender: '',
+    maritalStatus: '',
+    isPolicyholder: null,
+  },
+  drivingHistory: {
+    yearsLicensed: null,
+    atFaultClaims: null,
+    notAtFaultClaims: null,
+    certificateOfMerit: null,
+    ncd: null,
+    claims: null,
+    convictions: null,
+  },
+  contact: {
+    preferredName: '',
+    email: '',
+    phone: '',
+    postalCode: '',
+    marketingChannels: [],
+    consentPdpa: false,
+  },
+  quoteSelection: {
+    billingCycle: 'annual',
+    excess: 600,
+    promoCode: '',
+  },
+  hasAdditionalDrivers: null,
+  additionalDrivers: [],
+  optionalBenefits: [],
+})
+
+function setField(path, value) {
+  const keys = path.split('.')
+  let cursor = state
+  while (keys.length > 1) {
+    cursor = cursor[keys.shift()]
+  }
+  cursor[keys[0]] = value
+}
+
+export function useQuote() {
+  return {
+    quote: readonly(state),
+    mutable: state,
+    setField,
+  }
+}
