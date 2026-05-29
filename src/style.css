@@ -125,6 +125,12 @@ button {
 /* ============================================================
    Section headings + helper text.
    ============================================================ */
+/* Every step view must grow to fill .bdi-main so the sticky CTA
+   bar is pushed to sit right above the footer.                   */
+.step {
+  flex: 1;
+}
+
 .bdi-section-title {
   font-weight: 900;
   font-size: 20px;

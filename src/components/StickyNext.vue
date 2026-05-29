@@ -68,7 +68,7 @@ function onBack() {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  margin: 24px -16px 0 -16px;
+  margin: auto -16px 0 -16px;
   border-top-left-radius: 8px;
   border-top-right-radius: 8px;
 }

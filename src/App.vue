@@ -22,7 +22,7 @@ import StepIndicator from './components/StepIndicator.vue'
 <style>
 .bdi-main {
   flex: 1;
-  padding: 0 16px 24px 16px;
+  padding: 0 16px 0 16px;
   display: flex;
   flex-direction: column;
 }
