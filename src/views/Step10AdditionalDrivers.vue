@@ -1,12 +1,15 @@
 <script setup>
 import { computed, reactive } from 'vue'
 import InputText from 'primevue/inputtext'
-import DatePicker from 'primevue/datepicker'
+import BdiDateField from '../components/BdiDateField.vue'
 import Select from 'primevue/select'
 import StickyNext from '../components/StickyNext.vue'
+import FieldError from '../components/FieldError.vue'
 import { useQuote } from '../store/quote'
+import { useValidation } from '../composables/useValidation'
 
 const { quote, mutable } = useQuote()
+const { showErrors, reveal } = useValidation()
 
 // Figma 4124-13337 — three scenarios:
 //   1. Immediately Proceed (No household + No outside drivers).
@@ -104,6 +107,14 @@ const canContinue = computed(() => {
   return true
 })
 
+const householdError = computed(() => showErrors.value && local.hasHousehold === null)
+const driversError = computed(() =>
+  showErrors.value && local.hasHousehold === true && local.drivers.length === 0
+)
+const outsideError = computed(() =>
+  showErrors.value && local.hasHousehold !== null && local.hasOutside === null
+)
+
 const summary = (d) => {
   const last4 = d.nric ? d.nric.slice(-4) : ''
   return `${d.relationship} · ${d.name}${last4 ? ' · …' + last4 : ''}`
@@ -117,22 +128,23 @@ const claimsSummary = (d) =>
   <section class="step">
     <h1 class="bdi-section-title">Who else drives your car?</h1>
 
-    <div class="block">
+    <div class="block" :data-error="householdError ? 'true' : null">
       <p class="bdi-field-label">Does anyone else in your household drive this car?</p>
       <div class="yes-no">
         <button
           type="button"
           class="yn-button"
-          :class="{ 'is-selected': local.hasHousehold === true }"
+          :class="{ 'is-selected': local.hasHousehold === true, 'is-error': householdError }"
           @click="setHousehold(true)"
         >Yes</button>
         <button
           type="button"
           class="yn-button"
-          :class="{ 'is-selected': local.hasHousehold === false }"
+          :class="{ 'is-selected': local.hasHousehold === false, 'is-error': householdError }"
           @click="setHousehold(false)"
         >No</button>
       </div>
+      <FieldError :show="householdError" message="Let us know if anyone else in your household drives this car." />
     </div>
 
     <template v-if="local.hasHousehold === true">
@@ -176,13 +188,7 @@ const claimsSummary = (d) =>
 
         <div class="field">
           <label class="bdi-field-label">Date of birth</label>
-          <DatePicker
-            v-model="local.draft.dob"
-            date-format="dd/mm/yy"
-            placeholder="DD/MM/YYYY"
-            show-icon
-            fluid
-          />
+          <BdiDateField v-model="local.draft.dob" />
         </div>
 
         <div class="field">
@@ -221,10 +227,18 @@ const claimsSummary = (d) =>
         </div>
       </div>
 
-      <button v-if="!local.showForm" type="button" class="add-driver" @click="startAdd">
+      <button
+        v-if="!local.showForm"
+        type="button"
+        class="add-driver"
+        :class="{ 'is-error': driversError }"
+        :data-error="driversError ? 'true' : null"
+        @click="startAdd"
+      >
         <i class="pi pi-plus"></i>
         Add a driver
       </button>
+      <FieldError :show="driversError" message="Add at least one household driver, or choose No above." />
 
       <p class="callout">
         <i class="pi pi-info-circle" aria-hidden="true"></i>
@@ -234,29 +248,30 @@ const claimsSummary = (d) =>
       </p>
     </template>
 
-    <div v-if="local.hasHousehold !== null" class="block">
+    <div v-if="local.hasHousehold !== null" class="block" :data-error="outsideError ? 'true' : null">
       <p class="bdi-field-label">Does anyone outside your household drive this car?</p>
       <div class="yes-no">
         <button
           type="button"
           class="yn-button"
-          :class="{ 'is-selected': local.hasOutside === true }"
+          :class="{ 'is-selected': local.hasOutside === true, 'is-error': outsideError }"
           @click="setOutside(true)"
         >Yes</button>
         <button
           type="button"
           class="yn-button"
-          :class="{ 'is-selected': local.hasOutside === false }"
+          :class="{ 'is-selected': local.hasOutside === false, 'is-error': outsideError }"
           @click="setOutside(false)"
         >No</button>
       </div>
+      <FieldError :show="outsideError" message="Let us know if anyone outside your household drives this car." />
       <p v-if="local.hasOutside === true" class="bdi-help">
         Unnamed household members are not covered. Any unnamed driver involved in 2 or more at-fault
         accidents in the 3 years before the policy starts is excluded automatically.
       </p>
     </div>
 
-    <StickyNext :disabled="!canContinue" />
+    <StickyNext :disabled="!canContinue" @blocked="reveal" />
   </section>
 </template>
 
@@ -285,10 +300,8 @@ const claimsSummary = (d) =>
   min-height: 48px;
 }
 .yn-button.is-selected {
-  border-color: var(--bdi-green);
-  box-shadow: 0 0 0 1px var(--bdi-green) inset;
-  color: var(--bdi-green);
-}
+  border-color: var(--bdi-green);}
+.yn-button.is-error { border-color: var(--bdi-red); }
 
 .driver-card {
   background: #fff;
@@ -342,10 +355,7 @@ const claimsSummary = (d) =>
   min-width: 48px;
 }
 .chip.is-on {
-  border-color: var(--bdi-green);
-  box-shadow: 0 0 0 1px var(--bdi-green) inset;
-  color: var(--bdi-green);
-}
+  border-color: var(--bdi-green);}
 
 .form-actions { display: flex; gap: 8px; }
 .form-cancel,
@@ -392,6 +402,7 @@ const claimsSummary = (d) =>
   min-height: 48px;
 }
 .add-driver:hover { border-color: var(--bdi-green); color: var(--bdi-green); }
+.add-driver.is-error { border-color: var(--bdi-red); border-style: solid; color: var(--bdi-red); }
 
 .callout {
   display: flex;

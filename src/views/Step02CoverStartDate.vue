@@ -1,10 +1,13 @@
 <script setup>
 import { computed } from 'vue'
-import DatePicker from 'primevue/datepicker'
+import BdiDateField from '../components/BdiDateField.vue'
 import StickyNext from '../components/StickyNext.vue'
+import FieldError from '../components/FieldError.vue'
 import { useQuote } from '../store/quote'
+import { useValidation } from '../composables/useValidation'
 
 const { quote, mutable } = useQuote()
+const { showErrors, reveal } = useValidation()
 
 const startDate = computed({
   get: () => quote.coverStartDate,
@@ -44,6 +47,10 @@ const endMax = computed(() => {
 })
 
 const canContinue = computed(() => Boolean(quote.coverStartDate && quote.coverEndDate))
+const startError = computed(() => showErrors.value && !quote.coverStartDate)
+// End date only becomes actionable once a start date is set (it auto-populates
+// then), so don't flag the disabled field.
+const endError = computed(() => showErrors.value && quote.coverStartDate && !quote.coverEndDate)
 
 const minStart = new Date()
 </script>
@@ -52,31 +59,26 @@ const minStart = new Date()
   <section class="step">
     <h1 class="bdi-section-title">When would you like your cover to start?</h1>
 
-    <div class="field">
+    <div class="field" :data-error="startError ? 'true' : null">
       <label class="bdi-field-label" for="start-date">Policy start date</label>
-      <DatePicker
+      <BdiDateField
         id="start-date"
         v-model="startDate"
-        date-format="dd/mm/yy"
-        placeholder="DD/MM/YYYY"
-        show-icon
+        :invalid="startError"
         :min-date="minStart"
-        fluid
       />
+      <FieldError :show="startError" message="Select a policy start date." />
     </div>
 
-    <div class="field">
+    <div class="field" :data-error="endError ? 'true' : null">
       <label class="bdi-field-label" for="end-date">Policy end date</label>
-      <DatePicker
+      <BdiDateField
         id="end-date"
         v-model="endDate"
-        date-format="dd/mm/yy"
-        placeholder="DD/MM/YYYY"
-        show-icon
+        :invalid="endError"
         :min-date="endMin"
         :max-date="endMax"
         :disabled="!quote.coverStartDate"
-        fluid
       />
       <p class="field-hint" v-if="quote.coverStartDate">
         Cover runs for 7 to 18 months. Default is 12 months from the start date.
@@ -84,9 +86,10 @@ const minStart = new Date()
       <p class="field-hint" v-else>
         Choose a start date first to set the policy length.
       </p>
+      <FieldError :show="endError" message="Select a policy end date." />
     </div>
 
-    <StickyNext :disabled="!canContinue" />
+    <StickyNext :disabled="!canContinue" @blocked="reveal" />
   </section>
 </template>
 

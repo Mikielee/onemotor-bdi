@@ -2,9 +2,12 @@
 import { computed, reactive } from 'vue'
 import InputText from 'primevue/inputtext'
 import StickyNext from '../components/StickyNext.vue'
+import FieldError from '../components/FieldError.vue'
 import { useQuote } from '../store/quote'
+import { useValidation } from '../composables/useValidation'
 
 const { quote, mutable } = useQuote()
+const { showErrors, reveal } = useValidation()
 
 const local = reactive({
   preferredName: quote.contact?.preferredName || '',
@@ -52,6 +55,12 @@ const canContinue = computed(() =>
   && postalValid.value
   && local.consentPdpa
 )
+
+const nameError = computed(() => showErrors.value && local.preferredName.trim().length === 0)
+const emailError = computed(() => showErrors.value && !emailValid.value)
+const phoneError = computed(() => showErrors.value && !phoneValid.value)
+const postalError = computed(() => showErrors.value && !postalValid.value)
+const pdpaError = computed(() => showErrors.value && !local.consentPdpa)
 </script>
 
 <template>
@@ -59,41 +68,60 @@ const canContinue = computed(() =>
     <h1 class="bdi-section-title">How can we reach you?</h1>
 
     <div class="fields">
-      <InputText
-        v-model="local.preferredName"
-        @update:model-value="sync"
-        placeholder="Preferred name"
-        class="bdi-input"
-        fluid
-      />
-      <InputText
-        v-model="local.email"
-        @update:model-value="sync"
-        placeholder="Email"
-        class="bdi-input"
-        type="email"
-        fluid
-      />
-      <div class="phone-row">
-        <div class="country-code">+65</div>
+      <div class="field" :data-error="nameError ? 'true' : null">
         <InputText
-          v-model="local.phone"
+          v-model="local.preferredName"
           @update:model-value="sync"
-          placeholder="Mobile"
-          class="bdi-input phone-input"
-          inputmode="numeric"
+          placeholder="Preferred name"
+          class="bdi-input"
+          :class="{ 'is-error': nameError }"
           fluid
         />
+        <FieldError :show="nameError" message="Enter your preferred name." />
       </div>
-      <InputText
-        v-model="local.postalCode"
-        @update:model-value="sync"
-        placeholder="Postal Code"
-        class="bdi-input"
-        inputmode="numeric"
-        maxlength="6"
-        fluid
-      />
+
+      <div class="field" :data-error="emailError ? 'true' : null">
+        <InputText
+          v-model="local.email"
+          @update:model-value="sync"
+          placeholder="Email"
+          class="bdi-input"
+          :class="{ 'is-error': emailError }"
+          type="email"
+          fluid
+        />
+        <FieldError :show="emailError" message="Enter a valid email address." />
+      </div>
+
+      <div class="field" :data-error="phoneError ? 'true' : null">
+        <div class="phone-row">
+          <div class="country-code">+65</div>
+          <InputText
+            v-model="local.phone"
+            @update:model-value="sync"
+            placeholder="Mobile"
+            class="bdi-input phone-input"
+            :class="{ 'is-error': phoneError }"
+            inputmode="numeric"
+            fluid
+          />
+        </div>
+        <FieldError :show="phoneError" message="Enter a valid mobile number." />
+      </div>
+
+      <div class="field" :data-error="postalError ? 'true' : null">
+        <InputText
+          v-model="local.postalCode"
+          @update:model-value="sync"
+          placeholder="Postal Code"
+          class="bdi-input"
+          :class="{ 'is-error': postalError }"
+          inputmode="numeric"
+          maxlength="6"
+          fluid
+        />
+        <FieldError :show="postalError" message="Enter a valid 6-digit postal code." />
+      </div>
     </div>
 
     <div class="channels">
@@ -113,17 +141,20 @@ const canContinue = computed(() =>
       </button>
     </div>
 
-    <button type="button" class="pdpa" @click="togglePdpa">
-      <span class="channel-box" :class="{ 'is-on': local.consentPdpa }">
-        <span v-if="local.consentPdpa" class="channel-tick">&check;</span>
-      </span>
-      <span class="pdpa-text">
-        I acknowledge and agree to the collection, use and disclosure of my personal data which has been provided for the purposes of procuring insurance products &amp; services as per the DirectAsia
-        <a href="https://www.directasia.com/security-privacy/" target="_blank" rel="noopener" @click.stop>Personal Data Protection Statement</a>.
-      </span>
-    </button>
+    <div :data-error="pdpaError ? 'true' : null">
+      <button type="button" class="pdpa" @click="togglePdpa">
+        <span class="channel-box" :class="{ 'is-on': local.consentPdpa, 'is-error': pdpaError }">
+          <span v-if="local.consentPdpa" class="channel-tick">&check;</span>
+        </span>
+        <span class="pdpa-text">
+          I acknowledge and agree to the collection, use and disclosure of my personal data which has been provided for the purposes of procuring insurance products &amp; services as per the DirectAsia
+          <a href="https://www.directasia.com/security-privacy/" target="_blank" rel="noopener" @click.stop>Personal Data Protection Statement</a>.
+        </span>
+      </button>
+      <FieldError :show="pdpaError" message="Please accept the Personal Data Protection Statement to continue." />
+    </div>
 
-    <StickyNext :disabled="!canContinue" />
+    <StickyNext :disabled="!canContinue" @blocked="reveal" />
   </section>
 </template>
 
@@ -140,6 +171,7 @@ const canContinue = computed(() =>
   flex-direction: column;
   gap: 8px;
 }
+.field { display: flex; flex-direction: column; }
 
 .phone-row {
   display: flex;
@@ -201,6 +233,7 @@ const canContinue = computed(() =>
   justify-content: center;
 }
 .channel-box.is-on { background: var(--bdi-green); border-color: var(--bdi-green); }
+.channel-box.is-error { border-color: var(--bdi-red); }
 .channel-tick {
   color: #fff;
   font-size: 10px;

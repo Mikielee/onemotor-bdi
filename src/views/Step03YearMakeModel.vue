@@ -2,7 +2,11 @@
 import { computed } from 'vue'
 import Select from 'primevue/select'
 import StickyNext from '../components/StickyNext.vue'
+import FieldError from '../components/FieldError.vue'
 import { useQuote } from '../store/quote'
+import { useValidation } from '../composables/useValidation'
+
+const { showErrors, reveal } = useValidation()
 
 const { quote, mutable } = useQuote()
 
@@ -54,13 +58,18 @@ const availableModels = computed(() => {
 })
 
 const canContinue = computed(() => Boolean(quote.carYear && quote.carMake && quote.carModel))
+
+// Only flag the next actionable missing field (the others are still disabled).
+const yearError = computed(() => showErrors.value && !quote.carYear)
+const makeError = computed(() => showErrors.value && quote.carYear && !quote.carMake)
+const modelError = computed(() => showErrors.value && quote.carMake && !quote.carModel)
 </script>
 
 <template>
   <section class="step">
     <h1 class="bdi-section-title">Tell us about your car</h1>
 
-    <div class="field">
+    <div class="field" :data-error="yearError ? 'true' : null">
       <Select
         v-model="yearModel"
         :options="years"
@@ -68,11 +77,13 @@ const canContinue = computed(() => Boolean(quote.carYear && quote.carMake && quo
         option-value="value"
         placeholder="Year"
         class="bdi-select"
+        :class="{ 'is-error': yearError }"
         fluid
       />
+      <FieldError :show="yearError" message="Select your car's year." />
     </div>
 
-    <div class="field">
+    <div class="field" :data-error="makeError ? 'true' : null">
       <Select
         v-model="makeModel"
         :options="makes"
@@ -81,11 +92,13 @@ const canContinue = computed(() => Boolean(quote.carYear && quote.carMake && quo
         :disabled="!quote.carYear"
         placeholder="Car brand"
         class="bdi-select"
+        :class="{ 'is-error': makeError }"
         fluid
       />
+      <FieldError :show="makeError" message="Select your car's brand." />
     </div>
 
-    <div class="field">
+    <div class="field" :data-error="modelError ? 'true' : null">
       <Select
         v-model="carModelV"
         :options="availableModels"
@@ -94,11 +107,13 @@ const canContinue = computed(() => Boolean(quote.carYear && quote.carMake && quo
         :disabled="!quote.carMake"
         placeholder="Car model"
         class="bdi-select"
+        :class="{ 'is-error': modelError }"
         fluid
       />
+      <FieldError :show="modelError" message="Select your car's model." />
     </div>
 
-    <StickyNext :disabled="!canContinue" />
+    <StickyNext :disabled="!canContinue" @blocked="reveal" />
   </section>
 </template>
 
@@ -112,21 +127,7 @@ const canContinue = computed(() => Boolean(quote.carYear && quote.carMake && quo
 
 .field { width: 100%; }
 
+/* Select styling comes from global style.css — no per-step overrides needed.
+   The global rule already paints filled text Carbon and placeholder Grey-600. */
 .step :deep(.bdi-select) { width: 100%; }
-.step :deep(.bdi-select .p-select) {
-  background: #fff;
-  border: 1px solid var(--bdi-grey-300);
-  border-radius: var(--bdi-radius-card);
-  min-height: 56px;
-}
-.step :deep(.bdi-select.p-disabled .p-select) {
-  background: var(--bdi-grey-100);
-}
-.step :deep(.bdi-select .p-select-label) {
-  font-family: var(--bdi-font);
-  color: var(--bdi-grey-600);
-  font-size: 16px;
-  padding: 16px;
-  font-weight: 500;
-}
 </style>

@@ -1,9 +1,12 @@
 <script setup>
 import { computed } from 'vue'
 import StickyNext from '../components/StickyNext.vue'
+import FieldError from '../components/FieldError.vue'
 import { useQuote } from '../store/quote'
+import { useValidation } from '../composables/useValidation'
 
 const { quote, mutable } = useQuote()
+const { showErrors, reveal } = useValidation()
 
 const options = [
   {
@@ -24,6 +27,7 @@ const options = [
 ]
 
 const canContinue = computed(() => Boolean(quote.coverType))
+const hasError = computed(() => showErrors.value && !canContinue.value)
 
 function select(value) {
   mutable.coverType = value
@@ -34,7 +38,12 @@ function select(value) {
   <section class="step">
     <h1 class="bdi-section-title">What cover do you need?</h1>
 
-    <div class="cover-options" role="radiogroup" aria-label="Cover type">
+    <div
+      class="cover-options"
+      role="radiogroup"
+      aria-label="Cover type"
+      :data-error="hasError ? 'true' : null"
+    >
       <button
         v-for="opt in options"
         :key="opt.value"
@@ -42,7 +51,7 @@ function select(value) {
         role="radio"
         :aria-checked="quote.coverType === opt.value"
         class="cover-card"
-        :class="{ 'is-selected': quote.coverType === opt.value }"
+        :class="{ 'is-selected': quote.coverType === opt.value, 'is-error': hasError }"
         @click="select(opt.value)"
       >
         <span class="cover-radio" :class="{ 'is-on': quote.coverType === opt.value }">
@@ -55,7 +64,9 @@ function select(value) {
       </button>
     </div>
 
-    <StickyNext :disabled="!canContinue" />
+    <FieldError :show="hasError" message="Select a cover option." />
+
+    <StickyNext :disabled="!canContinue" @blocked="reveal" />
   </section>
 </template>
 
@@ -89,8 +100,10 @@ function select(value) {
 
 .cover-card:hover { border-color: var(--bdi-grey-500); }
 .cover-card.is-selected {
-  border-color: var(--bdi-green);
-  box-shadow: 0 0 0 1px var(--bdi-green) inset;
+  border-color: var(--bdi-green);}
+/* Error state — red outline on every option until one is picked (Figma 4691-2). */
+.cover-card.is-error {
+  border-color: var(--bdi-red);
 }
 
 .cover-radio {
