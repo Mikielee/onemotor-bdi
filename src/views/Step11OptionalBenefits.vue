@@ -2,22 +2,24 @@
 import { computed, ref } from 'vue'
 import StickyNext from '../components/StickyNext.vue'
 import { useQuote } from '../store/quote'
+import { formatMoney } from '../utils/money'
 
 const { quote, mutable } = useQuote()
 
 // NCD Protector is NOT shown to users — internal memory rule from product.
+// `price` is a raw number; the template formats with the global money helper.
 const benefits = [
   {
     id: 'breakdown-assistance',
     title: '24-hour Breakdown Assistance',
-    price: '$8.11',
+    price: 8.11,
     blurb: 'Round-the-clock help if your car breaks down, including tow-to-workshop service.',
     recommended: true,
   },
   {
     id: 'personal-accident',
     title: 'Personal accident',
-    price: '$8.11',
+    price: 8.11,
     blurb: 'A lump-sum payment if a covered accident leads to death or permanent disability.',
     recommended: false,
   },
@@ -60,7 +62,7 @@ const canContinue = computed(() => true)
             <span class="switch-handle" />
           </button>
         </div>
-        <div class="price-pill">{{ b.price }}</div>
+        <div class="price-pill">{{ formatMoney(b.price) }}</div>
         <p class="benefit-blurb">{{ b.blurb }}</p>
         <a href="#" class="learn-more">Learn more</a>
       </div>
@@ -97,7 +99,7 @@ const canContinue = computed(() => true)
 }
 .benefit-card.is-on {
   border-color: var(--bdi-green);
-  box-shadow: 0 0 0 1px var(--bdi-green) inset, 0 1px 1px rgba(0,0,0,0.05);
+  box-shadow: 0 1px 1px rgba(0,0,0,0.05);
 }
 
 .badge {

@@ -6,7 +6,7 @@
   --bdi-cyan: #008EAA;         /* Links */
   --bdi-white: #FFFFFF;
   --bdi-grey-100: #F5F5F5;     /* Chip bg, callout bg */
-  --bdi-grey-200: #E4E4E4;     /* Borders */
+  --bdi-grey-200: #E4E4E4;     /* Borders, disabled/locked field background */
   --bdi-grey-300: #DADADA;     /* Input borders, inactive */
   --bdi-grey-500: #999999;
   --bdi-grey-600: #858585;     /* Secondary text */
@@ -22,6 +22,43 @@
 
   /* Field token: every input / dropdown / picker uses this. */
   --bdi-field-height: 56px;
+}
+
+/* ------------------------------------------------------------
+   Remap PrimeVue's form-field theme tokens to BDI greys.
+   PrimeVue's Aura theme ships a *slate* (blue-tinted) palette for
+   field borders, hover, and the disabled/inactive background. BDI
+   has no blue, so inactive fields were rendering blue-ish. We set
+   these on `body` (not :root) on purpose: PrimeVue injects its own
+   :root token block after this stylesheet, so a :root override
+   loses — but `body` sits below html in the tree, so its custom
+   properties win for every field inside it. We override both the
+   shared form-field tokens and the component-level tokens PrimeVue
+   sets explicitly to slate.
+   ------------------------------------------------------------ */
+body {
+  --p-form-field-background: var(--bdi-white);
+  --p-form-field-color: var(--bdi-carbon);
+  --p-form-field-placeholder-color: var(--bdi-grey-600);
+  --p-form-field-border-color: var(--bdi-grey-300);
+  --p-form-field-hover-border-color: var(--bdi-grey-500);
+  --p-form-field-focus-border-color: var(--bdi-green);
+  --p-form-field-disabled-background: var(--bdi-grey-200);
+  --p-form-field-disabled-color: var(--bdi-grey-600);
+
+  --p-select-border-color: var(--bdi-grey-300);
+  --p-select-hover-border-color: var(--bdi-grey-500);
+  --p-select-focus-border-color: var(--bdi-green);
+  --p-select-disabled-background: var(--bdi-grey-200);
+  --p-select-color: var(--bdi-carbon);
+  --p-select-disabled-color: var(--bdi-grey-600);
+  --p-select-placeholder-color: var(--bdi-grey-600);
+
+  --p-inputtext-border-color: var(--bdi-grey-300);
+  --p-inputtext-hover-border-color: var(--bdi-grey-500);
+  --p-inputtext-focus-border-color: var(--bdi-green);
+  --p-inputtext-disabled-background: var(--bdi-grey-200);
+  --p-inputtext-disabled-color: var(--bdi-grey-600);
 }
 
 html, body {
@@ -105,6 +142,23 @@ button {
   color: var(--bdi-grey-600);
   opacity: 1;
   cursor: not-allowed;
+}
+/* "Blocked" = the step isn't valid yet. The button looks grey like a disabled
+   one, but stays clickable so a click can reveal the field errors and scroll
+   to the first one (Figma 4691-2 error-state behaviour). Because the element
+   isn't actually :disabled, PrimeVue's primary hover-border and focus-ring
+   tokens would otherwise paint green; we re-point them to Carbon here. */
+.p-button.bdi-primary.is-blocked {
+  background: var(--bdi-grey-200);
+  color: var(--bdi-grey-600);
+  cursor: pointer;
+  --p-button-primary-hover-border-color: var(--bdi-carbon);
+  --p-button-primary-active-border-color: var(--bdi-carbon);
+  --p-button-primary-focus-ring-color: var(--bdi-carbon);
+}
+.p-button.bdi-primary.is-blocked:hover {
+  background: var(--bdi-grey-300);
+  border-color: var(--bdi-carbon);
 }
 
 .p-button.bdi-secondary {
@@ -200,6 +254,23 @@ button {
   box-shadow: none;
 }
 
+/* Filled = green border (BDI design-system rule). A field that holds a valid
+   value keeps the green 1px border even after blur, so users can scan the form
+   and see which fields are "done". Errors still win because the global
+   .is-error rule below uses !important.
+
+   Text input: `:not(:placeholder-shown)` is true once the user has typed
+   anything (every BDI input has a placeholder, so this is reliable).
+   Select: PrimeVue v4 keeps `.p-placeholder` on the label until a value is
+   picked; once picked, the class drops, so `:has(...:not(.p-placeholder))`
+   matches filled selects.
+
+   The BdiDateField component handles its own filled state via .is-filled. */
+.p-inputtext:enabled:not(:placeholder-shown):not(.is-error),
+.p-select:not(.p-disabled):not(.p-focus):not(.is-error):has(.p-select-label:not(.p-placeholder)) {
+  border-color: var(--bdi-green) !important;
+}
+
 .p-inputtext.p-invalid,
 .p-select.p-invalid,
 .p-textarea.p-invalid {
@@ -268,4 +339,44 @@ button {
   padding: 10px 12px;
   font-size: 13px;
   margin: 0;
+}
+
+/* ============================================================
+   Field-level error message — the red caption shown under a
+   field/group when it fails validation (Figma 4691-2 Caption,
+   14px Museo Sans, Primary/Red). Used via <FieldError>.
+   ============================================================ */
+.bdi-field-error {
+  color: var(--bdi-red);
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 500;
+  margin: 8px 0 0 0;
+}
+
+/* When a field is in error, its control border turns red. Components opt in
+   by adding `.is-error` to the input/select/picker (or a wrapper of it).
+   PrimeVue v4 builds its border from theme CSS variables, so we override those
+   tokens (which cascade to nested inputs) AND set border-color !important as a
+   belt-and-suspenders against per-step scoped field styles. */
+.is-error .p-select,
+.is-error .p-inputtext,
+.is-error .p-datepicker-input,
+.is-error .p-textarea,
+.p-select.is-error,
+.p-inputtext.is-error,
+.p-textarea.is-error,
+.is-error.p-select,
+.is-error.p-inputtext {
+  border-color: var(--bdi-red) !important;
+}
+.is-error,
+.is-error.p-select,
+.is-error.p-inputtext {
+  --p-select-border-color: var(--bdi-red);
+  --p-select-hover-border-color: var(--bdi-red);
+  --p-select-focus-border-color: var(--bdi-red);
+  --p-inputtext-border-color: var(--bdi-red);
+  --p-inputtext-hover-border-color: var(--bdi-red);
+  --p-inputtext-focus-border-color: var(--bdi-red);
 }

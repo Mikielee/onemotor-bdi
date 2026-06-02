@@ -3,6 +3,7 @@ import { computed, reactive, ref } from 'vue'
 import InputText from 'primevue/inputtext'
 import StickyNext from '../components/StickyNext.vue'
 import { useQuote } from '../store/quote'
+import { formatMoney, formatMoneySigned } from '../utils/money'
 
 const { quote, mutable } = useQuote()
 
@@ -30,8 +31,7 @@ const excessOptions = [
 
 function deltaLabel(o) {
   if (o.kind === 'default') return 'Default'
-  const sign = o.delta > 0 ? '+' : '-'
-  return `${sign}$${Math.abs(o.delta)}/yr`
+  return `${formatMoneySigned(o.delta)}/yr`
 }
 
 function sync() {
@@ -53,9 +53,13 @@ const annualPremium = computed(() => {
 
 const displayPrice = computed(() => {
   const annual = annualPremium.value
-  if (local.billingCycle === 'monthly') return (annual / 12).toFixed(2)
-  return annual.toFixed(2)
+  const value = local.billingCycle === 'monthly' ? annual / 12 : annual
+  return formatMoney(value)
 })
+
+const currentDelta = computed(() =>
+  excessOptions.find((e) => e.value === local.excess)?.delta ?? 0
+)
 
 const priceUnit = computed(() => local.billingCycle === 'monthly' ? 'per month' : 'per year')
 
@@ -149,23 +153,21 @@ const carLine = computed(() => {
       </div>
 
       <div class="price-block">
-        <p class="price">S${{ displayPrice }}</p>
+        <p class="price">{{ displayPrice }}</p>
         <p class="price-sub">{{ priceUnit }} (incl. GST)</p>
       </div>
 
       <div class="breakdown">
-        <div class="row"><span>Premium</span><span>S${{ basePrice.toFixed(2) }}</span></div>
+        <div class="row"><span>Premium</span><span>{{ formatMoney(basePrice) }}</span></div>
         <div class="row" v-if="local.excess !== 600">
           <span>Excess adjustment ({{ excessOptions.find(e => e.value === local.excess)?.label }})</span>
-          <span :class="{ green: (excessOptions.find(e => e.value === local.excess)?.delta ?? 0) < 0 }">
-            {{ (excessOptions.find(e => e.value === local.excess)?.delta ?? 0) > 0 ? '+' : '−' }}S${{ Math.abs(excessOptions.find(e => e.value === local.excess)?.delta ?? 0).toFixed(2) }}
-          </span>
+          <span :class="{ green: currentDelta < 0 }">{{ formatMoneySigned(currentDelta) }}</span>
         </div>
         <div class="row" v-if="local.appliedPromo">
           <span>Promo ({{ local.appliedPromo.code }})</span>
           <span class="green">{{ local.appliedPromo.benefit }}</span>
         </div>
-        <div class="row total"><span>Total</span><span>S${{ annualPremium.toFixed(2) }}</span></div>
+        <div class="row total"><span>Total</span><span>{{ formatMoney(annualPremium) }}</span></div>
       </div>
     </div>
 
@@ -447,9 +449,7 @@ const carLine = computed(() => {
   cursor: pointer;
 }
 .excess-card.is-selected {
-  border-color: var(--bdi-green);
-  box-shadow: 0 0 0 1px var(--bdi-green) inset;
-}
+  border-color: var(--bdi-green);}
 .excess-amount { font-size: 16px; font-weight: 700; color: var(--bdi-carbon); }
 .excess-delta { font-size: 12px; font-weight: 500; }
 .d-up { color: var(--bdi-red); }

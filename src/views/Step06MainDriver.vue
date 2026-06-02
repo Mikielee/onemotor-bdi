@@ -1,11 +1,14 @@
 <script setup>
 import { computed, reactive } from 'vue'
-import DatePicker from 'primevue/datepicker'
+import BdiDateField from '../components/BdiDateField.vue'
 import Select from 'primevue/select'
 import StickyNext from '../components/StickyNext.vue'
+import FieldError from '../components/FieldError.vue'
 import { useQuote } from '../store/quote'
+import { useValidation } from '../composables/useValidation'
 
 const { quote, mutable } = useQuote()
+const { showErrors, reveal } = useValidation()
 
 const local = reactive({
   isPolicyholder: quote.mainDriver?.isPolicyholder ?? null,
@@ -41,64 +44,60 @@ const maxDob = new Date()
 const canContinue = computed(() =>
   local.isPolicyholder !== null && local.dob && local.gender && local.maritalStatus
 )
+
+const phError = computed(() => showErrors.value && local.isPolicyholder === null)
+const dobError = computed(() => showErrors.value && !local.dob)
+const genderError = computed(() => showErrors.value && !local.gender)
+const maritalError = computed(() => showErrors.value && !local.maritalStatus)
 </script>
 
 <template>
   <section class="step">
     <h1 class="bdi-section-title">Main driver details</h1>
 
-    <div class="field">
+    <!-- Order per Figma 4719-4828: Policyholder, Gender, Marital status, DOB. -->
+    <div class="field" :data-error="phError ? 'true' : null">
       <p class="field-label">Is the main driver also the policyholder?</p>
       <div class="yes-no">
         <button
           type="button"
           class="yn-button"
-          :class="{ 'is-selected': local.isPolicyholder === true }"
+          :class="{ 'is-selected': local.isPolicyholder === true, 'is-error': phError }"
           @click="pickPolicyholder(true)"
         >Yes</button>
         <button
           type="button"
           class="yn-button"
-          :class="{ 'is-selected': local.isPolicyholder === false }"
+          :class="{ 'is-selected': local.isPolicyholder === false, 'is-error': phError }"
           @click="pickPolicyholder(false)"
         >No</button>
       </div>
-    </div>
-
-    <div class="field">
-      <label class="field-label" for="dob">Date of birth</label>
-      <DatePicker
-        id="dob"
-        :model-value="local.dob"
-        @update:model-value="onDobChange"
-        date-format="dd/mm/yy"
-        placeholder="DD/MM/YYYY"
-        show-icon
-        :max-date="maxDob"
-        class="bdi-input"
-        fluid
+      <FieldError
+        :show="phError"
+        message="Please select whether the main driver is also the policyholder."
       />
     </div>
 
-    <div class="field">
+    <div class="field" :data-error="genderError ? 'true' : null">
       <p class="field-label">Gender</p>
       <div class="yes-no">
         <button
           type="button"
           class="yn-button"
-          :class="{ 'is-selected': local.gender === 'male' }"
+          :class="{ 'is-selected': local.gender === 'male', 'is-error': genderError }"
           @click="pickGender('male')"
         >Male</button>
         <button
           type="button"
           class="yn-button"
-          :class="{ 'is-selected': local.gender === 'female' }"
+          :class="{ 'is-selected': local.gender === 'female', 'is-error': genderError }"
           @click="pickGender('female')"
         >Female</button>
       </div>
+      <FieldError :show="genderError" message="Please select your gender." />
     </div>
 
-    <div class="field">
+    <div class="field" :data-error="maritalError ? 'true' : null">
       <Select
         :model-value="local.maritalStatus"
         @update:model-value="onMaritalChange"
@@ -107,11 +106,25 @@ const canContinue = computed(() =>
         option-value="value"
         placeholder="Marital status"
         class="bdi-select"
+        :class="{ 'is-error': maritalError }"
         fluid
       />
+      <FieldError :show="maritalError" message="Please select your marital status." />
     </div>
 
-    <StickyNext :disabled="!canContinue" />
+    <div class="field" :data-error="dobError ? 'true' : null">
+      <label class="field-label" for="dob">Date of birth</label>
+      <BdiDateField
+        id="dob"
+        :model-value="local.dob"
+        @update:model-value="onDobChange"
+        :max-date="maxDob"
+        :invalid="dobError"
+      />
+      <FieldError :show="dobError" message="Please select your date of birth." />
+    </div>
+
+    <StickyNext :disabled="!canContinue" @blocked="reveal" />
   </section>
 </template>
 
@@ -148,9 +161,8 @@ const canContinue = computed(() =>
   font-family: var(--bdi-font);
 }
 .yn-button.is-selected {
-  border-color: var(--bdi-green);
-  box-shadow: 0 0 0 1px var(--bdi-green) inset;
-}
+  border-color: var(--bdi-green);}
+.yn-button.is-error { border-color: var(--bdi-red); }
 
 .step :deep(.bdi-input .p-inputtext) {
   font-family: var(--bdi-font);
@@ -169,18 +181,7 @@ const canContinue = computed(() =>
   color: var(--bdi-carbon);
 }
 
+/* Select styling comes from global style.css — no per-step overrides needed.
+   The global rule already paints filled text Carbon and placeholder Grey-600. */
 .step :deep(.bdi-select) { width: 100%; }
-.step :deep(.bdi-select .p-select) {
-  background: #fff;
-  border: 1px solid var(--bdi-grey-300);
-  border-radius: var(--bdi-radius-card);
-  min-height: 56px;
-}
-.step :deep(.bdi-select .p-select-label) {
-  font-family: var(--bdi-font);
-  color: var(--bdi-grey-600);
-  font-size: 16px;
-  padding: 16px;
-  font-weight: 500;
-}
 </style>

@@ -23,6 +23,11 @@ const state = reactive({
     notAtFaultClaims: null,
     certificateOfMerit: null,
     ncd: null,
+    // NCD follow-ups (OMP-93, Figma 4708-3143)
+    ncdZeroReason: null,      // when ncd === 0
+    otherCarNcd: null,        // when ncdZeroReason === 'ncd-other-car'
+    transferredFrom: null,    // when ncdZeroReason === 'ncd-other-car'
+    fiftyYears: null,         // when ncd === 50
     claims: null,
     convictions: null,
   },

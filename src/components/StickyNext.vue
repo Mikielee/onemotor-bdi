@@ -11,6 +11,11 @@ const props = defineProps({
   price: { type: String, default: '' },
 })
 
+// `blocked` fires when the user clicks Next while the step is still invalid.
+// The parent step listens for it to reveal field errors and scroll to the
+// first one. See composables/useValidation.js.
+const emit = defineEmits(['blocked'])
+
 const router = useRouter()
 const route = useRoute()
 
@@ -18,7 +23,12 @@ const step = computed(() => route.meta?.step ?? 1)
 const showBack = computed(() => !props.hideBack && step.value > 1)
 
 function onNext() {
-  if (props.disabled) return
+  // The button looks grey but is still clickable: a click while invalid
+  // reveals the errors instead of navigating.
+  if (props.disabled) {
+    emit('blocked')
+    return
+  }
   if (props.to !== null) {
     router.push(typeof props.to === 'object' ? props.to : props.to)
     return
@@ -50,7 +60,8 @@ function onBack() {
       </button>
       <Button
         class="bdi-primary"
-        :disabled="disabled"
+        :class="{ 'is-blocked': disabled }"
+        :aria-disabled="disabled ? 'true' : 'false'"
         :label="label"
         @click="onNext"
       />

@@ -1,9 +1,12 @@
 <script setup>
 import { computed, reactive } from 'vue'
 import StickyNext from '../components/StickyNext.vue'
+import FieldError from '../components/FieldError.vue'
 import { useQuote } from '../store/quote'
+import { useValidation } from '../composables/useValidation'
 
 const { quote, mutable } = useQuote()
+const { showErrors, reveal } = useValidation()
 
 const usageOptions = [
   { value: 'private-only', title: 'Private only', desc: 'Social, domestic and pleasure purposes only.' },
@@ -30,13 +33,22 @@ function sync() { mutable.carUsage = { ...local } }
 const canContinue = computed(() =>
   Boolean(local.usage && local.commute && local.offPeak !== null)
 )
+
+const usageError = computed(() => showErrors.value && !local.usage)
+const commuteError = computed(() => showErrors.value && !local.commute)
+const offPeakError = computed(() => showErrors.value && local.offPeak === null)
 </script>
 
 <template>
   <section class="step">
     <h1 class="bdi-section-title">How do you use your car?</h1>
 
-    <div class="card-stack" role="radiogroup" aria-label="Car usage">
+    <div
+      class="card-stack"
+      role="radiogroup"
+      aria-label="Car usage"
+      :data-error="usageError ? 'true' : null"
+    >
       <button
         v-for="o in usageOptions"
         :key="o.value"
@@ -44,7 +56,7 @@ const canContinue = computed(() =>
         role="radio"
         :aria-checked="local.usage === o.value"
         class="choice-card"
-        :class="{ 'is-selected': local.usage === o.value }"
+        :class="{ 'is-selected': local.usage === o.value, 'is-error': usageError }"
         @click="pickUsage(o.value)"
       >
         <span class="choice-radio" :class="{ 'is-on': local.usage === o.value }">
@@ -56,13 +68,19 @@ const canContinue = computed(() =>
         </span>
       </button>
     </div>
+    <FieldError :show="usageError" message="Select how you use your car." />
 
     <p class="disclaimer">
       <strong>Disclaimer</strong>: we do not cover ride hailing.
     </p>
 
     <p class="field-label">Do you use this car for any part of your commute to work or school?</p>
-    <div class="card-stack" role="radiogroup" aria-label="Commute">
+    <div
+      class="card-stack"
+      role="radiogroup"
+      aria-label="Commute"
+      :data-error="commuteError ? 'true' : null"
+    >
       <button
         v-for="o in commuteOptions"
         :key="o.value"
@@ -70,7 +88,7 @@ const canContinue = computed(() =>
         role="radio"
         :aria-checked="local.commute === o.value"
         class="choice-card"
-        :class="{ 'is-selected': local.commute === o.value }"
+        :class="{ 'is-selected': local.commute === o.value, 'is-error': commuteError }"
         @click="pickCommute(o.value)"
       >
         <span class="choice-radio" :class="{ 'is-on': local.commute === o.value }">
@@ -82,24 +100,26 @@ const canContinue = computed(() =>
         </span>
       </button>
     </div>
+    <FieldError :show="commuteError" message="Select a commute option." />
 
     <p class="field-label">Is this an off-peak car?</p>
-    <div class="yes-no">
+    <div class="yes-no" :data-error="offPeakError ? 'true' : null">
       <button
         type="button"
         class="yn-button"
-        :class="{ 'is-selected': local.offPeak === true }"
+        :class="{ 'is-selected': local.offPeak === true, 'is-error': offPeakError }"
         @click="pickOffPeak(true)"
       >Yes</button>
       <button
         type="button"
         class="yn-button"
-        :class="{ 'is-selected': local.offPeak === false }"
+        :class="{ 'is-selected': local.offPeak === false, 'is-error': offPeakError }"
         @click="pickOffPeak(false)"
       >No</button>
     </div>
+    <FieldError :show="offPeakError" message="Let us know if this is an off-peak car." />
 
-    <StickyNext :disabled="!canContinue" />
+    <StickyNext :disabled="!canContinue" @blocked="reveal" />
   </section>
 </template>
 
@@ -127,9 +147,8 @@ const canContinue = computed(() =>
 }
 .choice-card:hover { border-color: var(--bdi-grey-500); }
 .choice-card.is-selected {
-  border-color: var(--bdi-green);
-  box-shadow: 0 0 0 1px var(--bdi-green) inset;
-}
+  border-color: var(--bdi-green);}
+.choice-card.is-error { border-color: var(--bdi-red); }
 
 .choice-radio {
   flex-shrink: 0;
@@ -182,8 +201,6 @@ const canContinue = computed(() =>
   cursor: pointer;
 }
 .yn-button.is-selected {
-  border-color: var(--bdi-green);
-  box-shadow: 0 0 0 1px var(--bdi-green) inset;
-  color: var(--bdi-green);
-}
+  border-color: var(--bdi-green);}
+.yn-button.is-error { border-color: var(--bdi-red); }
 </style>
