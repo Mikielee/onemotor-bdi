@@ -25,6 +25,9 @@ const local = reactive({
   appliedPromo: null,
   promoError: '',
   coverageExpanded: false,
+  // Sticky-footer expand state (Figma 4754-5410). When true, shows the
+  // Annual/Monthly toggle + mini-breakdown above the Back/Price/Buy row.
+  stickyExpanded: false,
 })
 
 // Pricing model: base subtotal pre-GST, GST at 9%, annual mode gets a 3%
@@ -340,29 +343,76 @@ const stickyUnit = computed(() =>
       </p>
     </div>
 
-    <!-- Step-9 sticky footer (3-column, custom to this page) -->
-    <div class="sticky-footer">
+    <!-- Step-9 sticky footer (Figma 4754-5410)
+         Collapsed: handle + 3-col row (Back / mini-price / Buy now).
+         Expanded: handle + Annual/Monthly toggle + mini-breakdown + 3-col row.
+         The page footer's own border-top draws the hairline below the
+         sticky in both states. -->
+    <div class="sticky-footer" :class="{ 'is-expanded': local.stickyExpanded }">
       <button
         type="button"
         class="sticky-handle"
-        aria-label="Expand price details"
+        :aria-label="local.stickyExpanded ? 'Hide price details' : 'Show price details'"
+        :aria-expanded="local.stickyExpanded"
+        @click="local.stickyExpanded = !local.stickyExpanded"
       >
-        <i class="pi pi-chevron-up" aria-hidden="true"></i>
+        <i
+          :class="local.stickyExpanded ? 'pi pi-chevron-down' : 'pi pi-chevron-up'"
+          aria-hidden="true"
+        ></i>
       </button>
 
-      <button type="button" class="sticky-back" aria-label="Go back" @click="onBack">
-        <i class="pi pi-chevron-left" aria-hidden="true"></i>
-      </button>
+      <!-- Expanded panel: Annual/Monthly toggle + mini breakdown -->
+      <div v-if="local.stickyExpanded" class="sticky-expanded">
+        <div class="billing-toggle" role="tablist" aria-label="Billing cycle">
+          <button
+            type="button"
+            role="tab"
+            class="bt-button"
+            :class="{ 'is-on': local.billingCycle === 'annual' }"
+            :aria-selected="local.billingCycle === 'annual'"
+            @click="setBilling('annual')"
+          >Annual</button>
+          <button
+            type="button"
+            role="tab"
+            class="bt-button"
+            :class="{ 'is-on': local.billingCycle === 'monthly' }"
+            :aria-selected="local.billingCycle === 'monthly'"
+            @click="setBilling('monthly')"
+          >Monthly</button>
+        </div>
 
-      <div class="sticky-price">
-        <p class="sp-amount">
-          <span class="sp-green">{{ stickyAmount }}</span>
-          <span class="sp-unit">{{ stickyUnit }}</span>
-        </p>
-        <p class="sp-gst">(incl. GST)</p>
+        <div class="sticky-breakdown">
+          <p class="sb-title">Comprehensive</p>
+          <div class="sb-row">
+            <span>Subtotal</span><span>{{ formatMoney(baseSubtotal) }}</span>
+          </div>
+          <div v-if="hasPersonalAccident" class="sb-row">
+            <span>Medical expenses</span><span>{{ formatMoney(medicalExpenses) }}</span>
+          </div>
+          <div v-if="local.billingCycle === 'annual'" class="sb-row sb-discount">
+            <span>Annual payment 3% discount</span><span>Included</span>
+          </div>
+        </div>
       </div>
 
-      <button type="button" class="sticky-buy" @click="onBuy">Buy now</button>
+      <!-- Back / mini-price / Buy now row -->
+      <div class="sticky-bar">
+        <button type="button" class="sticky-back" aria-label="Go back" @click="onBack">
+          <i class="pi pi-chevron-left" aria-hidden="true"></i>
+        </button>
+
+        <div class="sticky-price">
+          <p class="sp-amount">
+            <span class="sp-green">{{ stickyAmount }}</span>
+            <span class="sp-unit">{{ stickyUnit }}</span>
+          </p>
+          <p class="sp-gst">(incl. GST)</p>
+        </div>
+
+        <button type="button" class="sticky-buy" @click="onBuy">Buy now</button>
+      </div>
     </div>
   </section>
 </template>
@@ -711,15 +761,98 @@ const stickyUnit = computed(() =>
   position: relative;
   margin: auto -16px 0 -16px;
   background: #fff;
-  padding: 24px 16px 12px 16px;
   border-top-left-radius: var(--bdi-radius-card);
   border-top-right-radius: var(--bdi-radius-card);
-  border-top: 1px solid var(--bdi-grey-200);
+  box-shadow: 0 -10px 7.5px rgba(0, 0, 0, 0.08);
+  display: flex;
+  flex-direction: column;
+}
+
+/* Expanded panel sits above the bar row. */
+.sticky-expanded {
+  padding: 24px 16px 12px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  border-top-left-radius: var(--bdi-radius-card);
+  border-top-right-radius: var(--bdi-radius-card);
+}
+
+/* Bar row (Back / mini-price / Buy now). When expanded, a 1px hairline
+   separates the expanded panel from the bar row. When collapsed, the bar
+   row sits flush against the page footer (which draws its own top border
+   for the divider between sticky and footer). */
+.sticky-bar {
+  padding: 24px 16px 12px 16px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
 }
+.sticky-footer.is-expanded .sticky-bar {
+  padding-top: 16px;
+  border-top: 1px solid var(--bdi-grey-200);
+}
+
+/* Mini Annual/Monthly toggle inside the expanded panel — same visual
+   language as the in-card billing pill, just full-width. */
+.sticky-expanded .billing-toggle {
+  background: var(--bdi-grey-100);
+  border: 1px solid var(--bdi-grey-200);
+  border-radius: 33554400px;
+  height: 43px;
+  padding: 3px;
+  display: flex;
+  gap: 2px;
+}
+.sticky-expanded .bt-button {
+  flex: 1;
+  border: 0;
+  border-radius: 33554400px;
+  font-family: var(--bdi-font);
+  font-weight: 700;
+  font-size: 12px;
+  line-height: 16.5px;
+  text-transform: capitalize;
+  color: var(--bdi-carbon);
+  background: transparent;
+  cursor: pointer;
+}
+.sticky-expanded .bt-button.is-on {
+  background: var(--bdi-carbon);
+  color: #fff;
+  box-shadow: 0 1px 1.5px rgba(0, 0, 0, 0.1), 0 1px 1px rgba(0, 0, 0, 0.1);
+}
+
+/* Mini breakdown card inside the expanded panel — Grey-100 fill, 8px
+   radius, rows of label / value (14px 500 Carbon). Annual discount row
+   shows the value text in green. */
+.sticky-breakdown {
+  background: var(--bdi-grey-100);
+  border-radius: var(--bdi-radius-card);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.sb-title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--bdi-carbon);
+  line-height: 16px;
+}
+.sb-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--bdi-carbon);
+  line-height: 16px;
+}
+.sb-discount { color: var(--bdi-green); }
+.sb-discount span { color: var(--bdi-green); }
 
 .sticky-handle {
   position: absolute;
