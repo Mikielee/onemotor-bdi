@@ -105,3 +105,7 @@ Reviewer feedback against the live Vercel build (`onemotor-bdi-primevue.vercel.a
 | Edited | `src/views/Step11OptionalBenefits.vue` |
 
 Build clean throughout; no console errors at any point. All changes verified in the local preview (port 5198) before each section was closed out. Nothing pushed to Vercel yet — local-only until a deploy is triggered.
+
+### Follow-up — Museo Sans adoption
+
+After the initial review pass, the licensed Museo Sans font files were dropped into `04_Design/museosans-font/`. The prototype now self-hosts MuseoSans-300/500/700/900 from `public/fonts/`, with `@font-face` declarations in `style.css` and `--bdi-font` pointing at "Museo Sans". The Nunito Sans Google Fonts link in `index.html` was replaced with `<link rel="preload">` hints for 500 and 700 so the first paint doesn't flash a fallback. OTF format for now; can swap to WOFF2 later for a smaller initial payload (current total ~240 KB across four weights).

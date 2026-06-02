@@ -1,3 +1,39 @@
+/* ------------------------------------------------------------
+   Museo Sans — licensed brand font, served locally from /public/fonts.
+   Figma references this family at weights 500 (Body/Caption), 700 (button
+   text, emphasized labels), and 900 (page headings + price). We also ship
+   300 for lighter copy if it's ever needed. OTF is loaded directly; we
+   can move to WOFF2 later for a faster initial paint if needed.
+   ------------------------------------------------------------ */
+@font-face {
+  font-family: 'Museo Sans';
+  src: url('/fonts/MuseoSans-300.otf') format('opentype');
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Museo Sans';
+  src: url('/fonts/MuseoSans-500.otf') format('opentype');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Museo Sans';
+  src: url('/fonts/MuseoSans-700.otf') format('opentype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Museo Sans';
+  src: url('/fonts/MuseoSans-900.otf') format('opentype');
+  font-weight: 900;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
   /* BDI brand tokens — sourced from Figma BDI Design System */
   --bdi-red: #DA291C;          /* Logo + error only */
@@ -14,7 +50,7 @@
 
   --bdi-error-bg: #FDECEA;
 
-  --bdi-font: "Nunito Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --bdi-font: "Museo Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 
   --bdi-max-mobile: 420px;
   --bdi-radius-card: 8px;
