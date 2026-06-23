@@ -28,7 +28,8 @@ const atFaultOptions = [
   { label: '0', value: 0 },
   { label: '1', value: 1 },
   { label: '2', value: 2 },
-  { label: '3+', value: 3 },
+  { label: '3', value: 3 },
+  { label: '4+', value: 4 },
 ]
 
 const notAtFaultOptions = [
@@ -36,7 +37,8 @@ const notAtFaultOptions = [
   { label: '1', value: 1 },
   { label: '2', value: 2 },
   { label: '3', value: 3 },
-  { label: '4+', value: 4 },
+  { label: '4', value: 4 },
+  { label: '5+', value: 5 },
 ]
 
 // NCD follow-up options (Figma 4708-3143).
@@ -139,7 +141,7 @@ const fiftyYearsError = computed(() => showErrors.value && showFiftyFollowup.val
 
 <template>
   <section class="step">
-    <h1 class="bdi-section-title">Your driving history</h1>
+    <h1 class="bdi-section-title">Main driver</h1>
 
     <div class="field" :data-error="yearsError ? 'true' : null">
       <label class="field-label">Years of valid driving licence</label>
@@ -157,13 +159,9 @@ const fiftyYearsError = computed(() => showErrors.value && showFiftyFollowup.val
       <FieldError :show="yearsError" message="Please select years of driving experience." />
     </div>
 
-    <p class="prefix">
-      In the 3 years prior to the start of the policy, all drivers to be insured had the following:
-    </p>
-
     <div class="field" :data-error="atFaultError ? 'true' : null">
       <p class="field-label">
-        Total number of <strong>at-fault</strong> accidents and/or claims
+        Total number of <strong>at-fault</strong> accidents and/or claims in the past 3 years
       </p>
       <div class="chip-row">
         <button
@@ -180,7 +178,7 @@ const fiftyYearsError = computed(() => showErrors.value && showFiftyFollowup.val
 
     <div class="field" :data-error="notAtFaultError ? 'true' : null">
       <p class="field-label">
-        Total number of <strong>not-at-fault</strong> accidents and/or claims
+        Total number of <strong>not-at-fault</strong> accidents and/or claims in the past 3 years
       </p>
       <div class="chip-row">
         <button
@@ -319,14 +317,6 @@ const fiftyYearsError = computed(() => showErrors.value && showFiftyFollowup.val
   line-height: 1.4;
 }
 .field-label strong { font-weight: 900; }
-
-.prefix {
-  margin: 0;
-  font-size: 16px;
-  font-weight: 500;
-  color: var(--bdi-carbon);
-  line-height: 1.4;
-}
 
 .chip-row {
   display: flex;
