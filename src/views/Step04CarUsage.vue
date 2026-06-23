@@ -24,25 +24,38 @@ const local = reactive({
   offPeak: quote.carUsage?.offPeak ?? null,
 })
 
-function pickUsage(v) { local.usage = v; sync() }
+function pickUsage(v) {
+  local.usage = v
+  // Private and business skips the commute question — clear any prior answer so
+  // a later switch back to "Private only" re-asks it.
+  if (v === 'private-business') local.commute = null
+  sync()
+}
 function pickCommute(v) { local.commute = v; sync() }
 function pickOffPeak(v) { local.offPeak = v; sync() }
 
 function sync() { mutable.carUsage = { ...local } }
 
-// Progressive reveal — each question appears only after the prior one is answered.
-const showCommute = computed(() => Boolean(local.usage))
-const showOffPeak = computed(() => Boolean(local.usage && local.commute))
-
-const canContinue = computed(() =>
-  Boolean(local.usage && local.commute && local.offPeak !== null)
+// Progressive reveal:
+//   Q1 always visible
+//   Q2 only if Q1 === private-only (private-business doesn't need commute info —
+//     it's already business use, so commute-to-work is irrelevant)
+//   Q3 after Q1 = private-business, OR after Q2 in the private-only path
+const showCommute = computed(() => local.usage === 'private-only')
+const showOffPeak = computed(() =>
+  local.usage === 'private-business' || (local.usage === 'private-only' && Boolean(local.commute))
 )
+
+const canContinue = computed(() => {
+  if (!local.usage) return false
+  if (local.usage === 'private-only' && !local.commute) return false
+  if (local.offPeak === null) return false
+  return true
+})
 
 const usageError = computed(() => showErrors.value && !local.usage)
-const commuteError = computed(() => showErrors.value && local.usage && !local.commute)
-const offPeakError = computed(() =>
-  showErrors.value && local.usage && local.commute && local.offPeak === null
-)
+const commuteError = computed(() => showErrors.value && showCommute.value && !local.commute)
+const offPeakError = computed(() => showErrors.value && showOffPeak.value && local.offPeak === null)
 </script>
 
 <template>
