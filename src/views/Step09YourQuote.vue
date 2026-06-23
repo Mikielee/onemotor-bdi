@@ -4,7 +4,8 @@
  * Figma references:
  *   - Mobile layout (whole page):   4189-8932
  *   - Coverage expanded state:      4148-3290
- *   - Billing toggle annual/monthly: 4719-3438
+ *   - Payment term Single/Instalment toggle: 4719-3438
+ *   - Save & email quote states: idle text link → split pill (edit) → outlined card (sent)
  *
  * Step 9 has its own sticky footer (3-column: Back / mini-price / Buy now)
  * so it doesn't use the shared <StickyNext>; it renders the footer inline.
@@ -19,23 +20,23 @@ const { quote, mutable } = useQuote()
 const router = useRouter()
 
 const local = reactive({
-  billingCycle: quote.quoteSelection?.billingCycle || 'annual',
+  paymentTerm: quote.quoteSelection?.paymentTerm || 'single',
   excess: quote.quoteSelection?.excess ?? 600,
   promoCode: quote.quoteSelection?.promoCode || '',
   appliedPromo: null,
   promoError: '',
   coverageExpanded: false,
   // Sticky-footer expand state (Figma 4754-5410). When true, shows the
-  // Annual/Monthly toggle + mini-breakdown above the Back/Price/Buy row.
+  // Single/Instalment toggle + mini-breakdown above the Back/Price/Buy row.
   stickyExpanded: false,
 })
 
-// Pricing model: base subtotal pre-GST, GST at 9%, annual mode gets a 3%
-// "annual payment discount" (displayed as "Included" rather than a money
-// value, to match Figma 4189-8932).
+// Pricing model: base subtotal pre-GST, GST at 9%, Single payment gets a 3%
+// "Single payment discount" (displayed as "Included" rather than a money
+// value, to match Figma 4189-8932). Instalment = annual total / 12.
 const baseSubtotal = 240.0
 const gstRate = 0.09
-const annualDiscountRate = 0.03
+const singleDiscountRate = 0.03
 
 // Excess deltas from Figma 4189-8932. $600 is the default.
 const excessOptions = [
@@ -54,13 +55,13 @@ function deltaLabel(o) {
 
 function sync() {
   mutable.quoteSelection = {
-    billingCycle: local.billingCycle,
+    paymentTerm: local.paymentTerm,
     excess: local.excess,
     promoCode: local.appliedPromo ? local.appliedPromo.code : '',
   }
 }
 
-function setBilling(v) { local.billingCycle = v; sync() }
+function setPaymentTerm(v) { local.paymentTerm = v; sync() }
 function setExcess(v) { local.excess = v; sync() }
 
 // Medical expenses line appears if the customer picked the Personal Accident
@@ -77,16 +78,16 @@ const subtotalWithAdjust = computed(() => {
 const gstAmount = computed(() => subtotalWithAdjust.value * gstRate)
 const annualTotal = computed(() => {
   const t = subtotalWithAdjust.value + gstAmount.value
-  // Annual mode applies the 3% discount; monthly mode doesn't.
-  return local.billingCycle === 'annual' ? t * (1 - annualDiscountRate) : t
+  // Single payment applies the 3% discount; Instalment doesn't.
+  return local.paymentTerm === 'single' ? t * (1 - singleDiscountRate) : t
 })
-const monthlyValue = computed(() => annualTotal.value / 12)
+const instalmentValue = computed(() => annualTotal.value / 12)
 
 const heroAmount = computed(() =>
-  local.billingCycle === 'monthly' ? formatMoney(monthlyValue.value) : formatMoney(annualTotal.value)
+  local.paymentTerm === 'instalment' ? formatMoney(instalmentValue.value) : formatMoney(annualTotal.value)
 )
 const heroUnit = computed(() =>
-  local.billingCycle === 'monthly' ? 'per month (incl. GST)' : 'per year (incl. GST)'
+  local.paymentTerm === 'instalment' ? 'per month (incl. GST)' : 'per year (incl. GST)'
 )
 
 // Coverage rows — Figma 4148-3290. Each row has a label, a `value` that
@@ -109,13 +110,15 @@ const visibleCoverage = computed(() =>
   local.coverageExpanded ? coverageRows : coverageRows.slice(0, 5)
 )
 
-// Promo logic. Mock valid code: SAVEMORE -> $50 eCapitaVoucher (no premium impact).
+// Promo logic. Mock valid code: TEST -> $50 eCapitavoucher (no premium impact).
+// Input is auto-uppercased as the user types so the field always shows the
+// canonical code casing.
 function applyPromo() {
   const code = local.promoCode.trim()
   if (!code) return
-  if (code.toLowerCase() === 'savemore') {
+  if (code === 'TEST') {
     local.appliedPromo = {
-      code: 'SAVEMORE',
+      code: 'TEST',
       benefit: 'Enjoy your $50 eCapitavoucher',
     }
     local.promoError = ''
@@ -130,10 +133,19 @@ function removePromo() {
   local.promoError = ''
   sync()
 }
-function onPromoInput() { if (local.promoError) local.promoError = '' }
+function onPromoInput(v) {
+  local.promoCode = (v || '').toUpperCase()
+  if (local.promoError) local.promoError = ''
+}
 
-// Email quote — Figma shows a single cyan-outlined CTA. Editing/sent states
-// keep the same flow as before, just behind that button.
+// Save & Email Quote component — 3 states per Figma:
+//   1. idle: BD shows a full-width cyan-outlined "Save & Email Quote" button
+//      (the DA + generic spec render this as a plain cyan text link).
+//   2. editing: split pill — left cell holds an inline-editable email field
+//      with a green border (defaulted to the email captured at Step 8),
+//      right cell is a green "Email quote" submit button.
+//   3. sent: white outlined card with a green check icon and the message
+//      "Your quote has been sent to <bold>email</bold>". No edit pencil.
 const emailState = ref('idle') // 'idle' | 'editing' | 'sent'
 const emailValue = ref(quote.contact?.email || '')
 
@@ -142,7 +154,6 @@ function submitEmail() {
   if (!emailValue.value) return
   emailState.value = 'sent'
 }
-function resetEmail() { emailState.value = 'idle' }
 
 const carLine = computed(() => {
   const parts = []
@@ -159,10 +170,10 @@ function onBuy() { router.push('/step/10') }
 // Mini-price on the sticky bar: green amount + " / year" inline, then
 // "(incl. GST)" line below.
 const stickyAmount = computed(() => formatMoney(
-  local.billingCycle === 'monthly' ? monthlyValue.value : annualTotal.value
+  local.paymentTerm === 'instalment' ? instalmentValue.value : annualTotal.value
 ))
 const stickyUnit = computed(() =>
-  local.billingCycle === 'monthly' ? '/ month' : '/ year'
+  local.paymentTerm === 'instalment' ? '/ month' : '/ year'
 )
 </script>
 
@@ -175,24 +186,24 @@ const stickyUnit = computed(() =>
           type="button"
           role="tab"
           class="bt-button"
-          :class="{ 'is-on': local.billingCycle === 'annual' }"
-          :aria-selected="local.billingCycle === 'annual'"
-          @click="setBilling('annual')"
-        >Annual</button>
+          :class="{ 'is-on': local.paymentTerm === 'single' }"
+          :aria-selected="local.paymentTerm === 'single'"
+          @click="setPaymentTerm('single')"
+        >Single</button>
         <button
           type="button"
           role="tab"
           class="bt-button"
-          :class="{ 'is-on': local.billingCycle === 'monthly' }"
-          :aria-selected="local.billingCycle === 'monthly'"
-          @click="setBilling('monthly')"
-        >Monthly</button>
+          :class="{ 'is-on': local.paymentTerm === 'instalment' }"
+          :aria-selected="local.paymentTerm === 'instalment'"
+          @click="setPaymentTerm('instalment')"
+        >Instalment</button>
       </div>
 
       <div class="price-block">
         <p class="price">{{ heroAmount }}</p>
         <p class="price-sub">{{ heroUnit }}</p>
-        <p v-if="local.billingCycle === 'monthly'" class="price-total">
+        <p v-if="local.paymentTerm === 'instalment'" class="price-total">
           Total: {{ formatMoney(annualTotal) }}
         </p>
       </div>
@@ -210,8 +221,8 @@ const stickyUnit = computed(() =>
           <span>GST (9%)</span>
           <span>{{ formatMoney(gstAmount) }}</span>
         </div>
-        <div v-if="local.billingCycle === 'annual'" class="row green">
-          <span>Annual payment 3% discount</span>
+        <div v-if="local.paymentTerm === 'single'" class="row green">
+          <span>Single payment 3% discount</span>
           <span>Included</span>
         </div>
         <div v-if="local.appliedPromo" class="row green">
@@ -241,16 +252,16 @@ const stickyUnit = computed(() =>
           v-model="emailValue"
           placeholder="your@email.com"
           class="email-input"
+          @keyup.enter="submitEmail"
         />
         <button type="button" class="email-submit" @click="submitEmail">Email quote</button>
       </div>
 
       <div v-else class="email-sent">
-        <i class="pi pi-check-circle" aria-hidden="true"></i>
-        <span>Your quote has been sent to <strong>{{ emailValue }}</strong></span>
-        <button type="button" class="email-undo" @click="resetEmail" aria-label="Edit again">
-          <i class="pi pi-pencil"></i>
-        </button>
+        <i class="pi pi-check-circle email-sent-check" aria-hidden="true"></i>
+        <span class="email-sent-text">
+          Your quote has been sent to <strong>{{ emailValue }}</strong>
+        </span>
       </div>
     </div>
 
@@ -298,7 +309,7 @@ const stickyUnit = computed(() =>
       <template v-else>
         <div class="promo-row">
           <InputText
-            v-model="local.promoCode"
+            :model-value="local.promoCode"
             @update:model-value="onPromoInput"
             placeholder="Enter Promo Code"
             class="promo-input"
@@ -362,25 +373,25 @@ const stickyUnit = computed(() =>
         ></i>
       </button>
 
-      <!-- Expanded panel: Annual/Monthly toggle + mini breakdown -->
+      <!-- Expanded panel: Single/Instalment toggle + mini breakdown -->
       <div v-if="local.stickyExpanded" class="sticky-expanded">
-        <div class="billing-toggle" role="tablist" aria-label="Billing cycle">
+        <div class="billing-toggle" role="tablist" aria-label="Payment term">
           <button
             type="button"
             role="tab"
             class="bt-button"
-            :class="{ 'is-on': local.billingCycle === 'annual' }"
-            :aria-selected="local.billingCycle === 'annual'"
-            @click="setBilling('annual')"
-          >Annual</button>
+            :class="{ 'is-on': local.paymentTerm === 'single' }"
+            :aria-selected="local.paymentTerm === 'single'"
+            @click="setPaymentTerm('single')"
+          >Single</button>
           <button
             type="button"
             role="tab"
             class="bt-button"
-            :class="{ 'is-on': local.billingCycle === 'monthly' }"
-            :aria-selected="local.billingCycle === 'monthly'"
-            @click="setBilling('monthly')"
-          >Monthly</button>
+            :class="{ 'is-on': local.paymentTerm === 'instalment' }"
+            :aria-selected="local.paymentTerm === 'instalment'"
+            @click="setPaymentTerm('instalment')"
+          >Instalment</button>
         </div>
 
         <div class="sticky-breakdown">
@@ -391,8 +402,8 @@ const stickyUnit = computed(() =>
           <div v-if="hasPersonalAccident" class="sb-row">
             <span>Medical expenses</span><span>{{ formatMoney(medicalExpenses) }}</span>
           </div>
-          <div v-if="local.billingCycle === 'annual'" class="sb-row sb-discount">
-            <span>Annual payment 3% discount</span><span>Included</span>
+          <div v-if="local.paymentTerm === 'single'" class="sb-row sb-discount">
+            <span>Single payment 3% discount</span><span>Included</span>
           </div>
         </div>
       </div>
@@ -541,28 +552,35 @@ const stickyUnit = computed(() =>
   line-height: 16px;
 }
 
+/* Idle state: BD shows a full-width cyan-outlined button. (DA generic spec
+   renders this as a plain cyan text link — same component, brand variant.) */
 .email-cta {
   background: #fff;
   border: 1px solid var(--bdi-cyan);
   color: var(--bdi-cyan);
   border-radius: var(--bdi-radius-card);
-  padding: 8px;
+  padding: 12px 14px;
   font-family: var(--bdi-font);
-  font-weight: 500;
-  font-size: 14px;
+  font-weight: 600;
+  font-size: 16px;
   cursor: pointer;
-  min-height: 33px;
+  min-height: 48px;
+  width: 100%;
 }
 .email-cta:hover { background: rgba(0,142,170,0.05); }
 
+/* Editing state: split pill per Figma — left cell is the email input with a
+   green border on left/top/bottom (no right border so it joins seamlessly
+   with the green submit button). Right cell is the green "Email quote" CTA. */
 .email-edit { display: flex; align-items: stretch; }
 .email-edit :deep(.email-input) {
   flex: 1;
   border-color: var(--bdi-green);
   border-right: 0;
   border-radius: 8px 0 0 8px !important;
-  min-height: 44px;
-  font-size: 14px !important;
+  min-height: 43px;
+  font-size: 16px !important;
+  padding: 12px 16px !important;
 }
 .email-submit {
   background: var(--bdi-green);
@@ -571,32 +589,29 @@ const stickyUnit = computed(() =>
   border-radius: 0 8px 8px 0;
   padding: 0 16px;
   font-family: var(--bdi-font);
-  font-weight: 700;
-  font-size: 14px;
+  font-weight: 600;
+  font-size: 16px;
   cursor: pointer;
+  min-height: 43px;
 }
 
+/* Sent state: white outlined card with the BD green check icon + sentence
+   confirming the destination email. No edit pencil per Figma spec. */
 .email-sent {
   display: flex;
   align-items: center;
   gap: 8px;
   background: #fff;
-  border: 1px solid var(--bdi-grey-200);
+  border: 1px solid rgba(0, 0, 0, 0.10);
   border-radius: 8px;
-  padding: 10px 12px;
-  font-size: 14px;
+  padding: 12px 14px;
+  font-size: 16px;
   color: var(--bdi-carbon);
+  min-height: 48px;
 }
-.email-sent .pi-check-circle { color: var(--bdi-green); font-size: 18px; flex-shrink: 0; }
-.email-sent strong { font-weight: 900; word-break: break-all; }
-.email-undo {
-  margin-left: auto;
-  background: transparent;
-  border: 0;
-  color: var(--bdi-cyan);
-  cursor: pointer;
-  padding: 4px;
-}
+.email-sent-check { color: var(--bdi-green); font-size: 24px; flex-shrink: 0; }
+.email-sent-text { line-height: 1.2; }
+.email-sent strong { font-weight: 700; word-break: break-all; }
 
 /* ============ Choose your excess ============ */
 .excess { display: flex; flex-direction: column; gap: 8px; }
