@@ -90,19 +90,20 @@ const offPeakError = computed(() => showErrors.value && showOffPeak.value && loc
     </div>
     <FieldError :show="usageError" message="Select your car usage." />
 
-    <!-- Q2 + disclaimer — revealed after Q1 -->
-    <template v-if="showCommute">
-      <div class="disclaimer">
-        <svg class="disclaimer-icon" viewBox="0 0 24 24" aria-hidden="true">
-          <path d="M2.998 12C2.998 7.026 7.025 2.998 12 2.998c4.972 0 8.999 4.028 8.999 9.002 0 4.972-4.027 9-8.999 9-4.973.004-9-4.026-9-9.002zm3.715-5.285A7.45 7.45 0 004.525 12c0 2.069.835 3.929 2.188 5.286A7.46 7.46 0 0012 19.47a7.46 7.46 0 005.286-2.184A7.45 7.45 0 0019.47 12a7.45 7.45 0 00-2.184-5.285A7.46 7.46 0 0012 4.525a7.46 7.46 0 00-5.287 2.19z" fill="currentColor"/>
-          <path d="M13.135 10.807v5.351a1.134 1.134 0 11-2.268 0v-5.351a1.134 1.134 0 112.268 0z" fill="currentColor"/>
-          <path d="M10.867 7.837a1.134 1.134 0 112.268 0 1.134 1.134 0 01-2.268 0z" fill="currentColor"/>
-        </svg>
-        <p class="disclaimer-text">
-          <strong>Disclaimer</strong>: we do not cover ride hailing.
-        </p>
-      </div>
+    <!-- Disclaimer — visible whenever Q1 is answered, regardless of usage choice -->
+    <div v-if="local.usage" class="disclaimer">
+      <svg class="disclaimer-icon" viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M2.998 12C2.998 7.026 7.025 2.998 12 2.998c4.972 0 8.999 4.028 8.999 9.002 0 4.972-4.027 9-8.999 9-4.973.004-9-4.026-9-9.002zm3.715-5.285A7.45 7.45 0 004.525 12c0 2.069.835 3.929 2.188 5.286A7.46 7.46 0 0012 19.47a7.46 7.46 0 005.286-2.184A7.45 7.45 0 0019.47 12a7.45 7.45 0 00-2.184-5.285A7.46 7.46 0 0012 4.525a7.46 7.46 0 00-5.287 2.19z" fill="currentColor"/>
+        <path d="M13.135 10.807v5.351a1.134 1.134 0 11-2.268 0v-5.351a1.134 1.134 0 112.268 0z" fill="currentColor"/>
+        <path d="M10.867 7.837a1.134 1.134 0 112.268 0 1.134 1.134 0 01-2.268 0z" fill="currentColor"/>
+      </svg>
+      <p class="disclaimer-text">
+        <strong>Disclaimer</strong>: we do not cover ride hailing.
+      </p>
+    </div>
 
+    <!-- Q2 — only for Private only path -->
+    <template v-if="showCommute">
       <p class="field-label">Do you use this car for any part of your commute to work or school?</p>
       <div
         class="card-stack"
