@@ -1,18 +1,11 @@
 <script setup>
+import logoUrl from '../assets/budget-direct-logo.png'
 </script>
 
 <template>
   <header class="bdi-header">
     <a class="bdi-logo" href="/" aria-label="Budget Direct Insurance home">
-      <span class="bdi-logo-tagline">It pays to choose</span>
-      <span class="bdi-logo-wordmark" aria-hidden="true">
-        <span class="bdi-logo-line">
-          <span class="dark">Bu</span><span class="red">dget</span>
-        </span>
-        <span class="bdi-logo-line">
-          <span class="dark">Di</span><span class="red">rect</span><sup class="reg">®</sup>
-        </span>
-      </span>
+      <img :src="logoUrl" alt="Budget Direct Insurance" />
     </a>
     <div class="bdi-header-right">
       <button class="bdi-product-chip" type="button">
@@ -38,42 +31,15 @@
 }
 
 .bdi-logo {
-  display: flex;
-  flex-direction: column;
+  display: inline-flex;
+  align-items: center;
   text-decoration: none;
   color: inherit;
-  gap: 2px;
-  line-height: 1;
 }
-
-.bdi-logo-tagline {
-  font-size: 9px;
-  font-weight: 500;
-  color: var(--bdi-carbon);
-  letter-spacing: 0.2px;
-  margin-bottom: 2px;
-}
-
-.bdi-logo-wordmark {
-  font-family: var(--bdi-font);
-  font-weight: 900;
-  letter-spacing: -0.02em;
-  display: inline-flex;
-  flex-direction: column;
-  line-height: 0.95;
-}
-.bdi-logo-line {
-  font-size: 20px;
-  display: inline-block;
-}
-.bdi-logo-line .dark { color: var(--bdi-carbon); }
-.bdi-logo-line .red { color: var(--bdi-red); }
-.bdi-logo-line .reg {
-  font-size: 9px;
-  font-weight: 700;
-  color: var(--bdi-red);
-  margin-left: 1px;
-  vertical-align: super;
+.bdi-logo img {
+  display: block;
+  height: 56px;
+  width: auto;
 }
 
 .bdi-header-right {
