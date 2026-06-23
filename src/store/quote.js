@@ -49,6 +49,23 @@ const state = reactive({
   additionalDrivers: [],
   driveLess: null,
   optionalBenefits: [],
+  policyholder: {
+    nric: '',
+    fullName: '',
+    address: {
+      postalCode: '',
+      block: '',
+      street: '',
+      unit: '',
+      buildingName: '',
+    },
+    carDetails: {
+      registrationNumber: '',
+      currentInsurer: '',
+      accidentClaimDate: '',   // MM/YYYY
+      ownership: '',           // 'private' | 'company' — odometer is DA-only per KB #7
+    },
+  },
 })
 
 function setField(path, value) {
