@@ -33,7 +33,7 @@ function onNext() {
     router.push(typeof props.to === 'object' ? props.to : props.to)
     return
   }
-  if (step.value < 11) router.push(`/step/${step.value + 1}`)
+  if (step.value < 17) router.push(`/step/${step.value + 1}`)
 }
 
 function onBack() {
