@@ -411,7 +411,7 @@ const stickyUnit = computed(() =>
           <p class="sp-gst">(incl. GST)</p>
         </div>
 
-        <button type="button" class="sticky-buy" @click="onBuy">Buy now</button>
+        <button type="button" class="sticky-buy" @click="onBuy">Next</button>
       </div>
     </div>
   </section>
