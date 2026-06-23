@@ -30,19 +30,26 @@ function pickOffPeak(v) { local.offPeak = v; sync() }
 
 function sync() { mutable.carUsage = { ...local } }
 
+// Progressive reveal — each question appears only after the prior one is answered.
+const showCommute = computed(() => Boolean(local.usage))
+const showOffPeak = computed(() => Boolean(local.usage && local.commute))
+
 const canContinue = computed(() =>
   Boolean(local.usage && local.commute && local.offPeak !== null)
 )
 
 const usageError = computed(() => showErrors.value && !local.usage)
-const commuteError = computed(() => showErrors.value && !local.commute)
-const offPeakError = computed(() => showErrors.value && local.offPeak === null)
+const commuteError = computed(() => showErrors.value && local.usage && !local.commute)
+const offPeakError = computed(() =>
+  showErrors.value && local.usage && local.commute && local.offPeak === null
+)
 </script>
 
 <template>
   <section class="step">
     <h1 class="bdi-section-title">How do you use your car?</h1>
 
+    <!-- Q1: Usage (always visible) -->
     <div
       class="card-stack"
       role="radiogroup"
@@ -60,7 +67,7 @@ const offPeakError = computed(() => showErrors.value && local.offPeak === null)
         @click="pickUsage(o.value)"
       >
         <span class="choice-radio" :class="{ 'is-on': local.usage === o.value }">
-          <span v-if="local.usage === o.value" class="choice-dot" />
+          <span class="choice-dot" />
         </span>
         <span class="choice-text">
           <span class="choice-title">{{ o.title }}</span>
@@ -68,56 +75,69 @@ const offPeakError = computed(() => showErrors.value && local.offPeak === null)
         </span>
       </button>
     </div>
-    <FieldError :show="usageError" message="Select how you use your car." />
+    <FieldError :show="usageError" message="Select your car usage." />
 
-    <p class="disclaimer">
-      <strong>Disclaimer</strong>: we do not cover ride hailing.
-    </p>
+    <!-- Q2 + disclaimer — revealed after Q1 -->
+    <template v-if="showCommute">
+      <div class="disclaimer">
+        <svg class="disclaimer-icon" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M2.998 12C2.998 7.026 7.025 2.998 12 2.998c4.972 0 8.999 4.028 8.999 9.002 0 4.972-4.027 9-8.999 9-4.973.004-9-4.026-9-9.002zm3.715-5.285A7.45 7.45 0 004.525 12c0 2.069.835 3.929 2.188 5.286A7.46 7.46 0 0012 19.47a7.46 7.46 0 005.286-2.184A7.45 7.45 0 0019.47 12a7.45 7.45 0 00-2.184-5.285A7.46 7.46 0 0012 4.525a7.46 7.46 0 00-5.287 2.19z" fill="currentColor"/>
+          <path d="M13.135 10.807v5.351a1.134 1.134 0 11-2.268 0v-5.351a1.134 1.134 0 112.268 0z" fill="currentColor"/>
+          <path d="M10.867 7.837a1.134 1.134 0 112.268 0 1.134 1.134 0 01-2.268 0z" fill="currentColor"/>
+        </svg>
+        <p class="disclaimer-text">
+          <strong>Disclaimer</strong>: we do not cover ride hailing.
+        </p>
+      </div>
 
-    <p class="field-label">Do you use this car for any part of your commute to work or school?</p>
-    <div
-      class="card-stack"
-      role="radiogroup"
-      aria-label="Commute"
-      :data-error="commuteError ? 'true' : null"
-    >
-      <button
-        v-for="o in commuteOptions"
-        :key="o.value"
-        type="button"
-        role="radio"
-        :aria-checked="local.commute === o.value"
-        class="choice-card"
-        :class="{ 'is-selected': local.commute === o.value, 'is-error': commuteError }"
-        @click="pickCommute(o.value)"
+      <p class="field-label">Do you use this car for any part of your commute to work or school?</p>
+      <div
+        class="card-stack"
+        role="radiogroup"
+        aria-label="Commute"
+        :data-error="commuteError ? 'true' : null"
       >
-        <span class="choice-radio" :class="{ 'is-on': local.commute === o.value }">
-          <span v-if="local.commute === o.value" class="choice-dot" />
-        </span>
-        <span class="choice-text">
-          <span class="choice-title">{{ o.title }}</span>
-          <span class="choice-desc">{{ o.desc }}</span>
-        </span>
-      </button>
-    </div>
-    <FieldError :show="commuteError" message="Select a commute option." />
+        <button
+          v-for="o in commuteOptions"
+          :key="o.value"
+          type="button"
+          role="radio"
+          :aria-checked="local.commute === o.value"
+          class="choice-card"
+          :class="{ 'is-selected': local.commute === o.value, 'is-error': commuteError }"
+          @click="pickCommute(o.value)"
+        >
+          <span class="choice-radio" :class="{ 'is-on': local.commute === o.value }">
+            <span class="choice-dot" />
+          </span>
+          <span class="choice-text">
+            <span class="choice-title">{{ o.title }}</span>
+            <span class="choice-desc">{{ o.desc }}</span>
+          </span>
+        </button>
+      </div>
+      <FieldError :show="commuteError" message="Tell us if you use your car for commuting." />
+    </template>
 
-    <p class="field-label">Is this an off-peak car?</p>
-    <div class="yes-no" :data-error="offPeakError ? 'true' : null">
-      <button
-        type="button"
-        class="yn-button"
-        :class="{ 'is-selected': local.offPeak === true, 'is-error': offPeakError }"
-        @click="pickOffPeak(true)"
-      >Yes</button>
-      <button
-        type="button"
-        class="yn-button"
-        :class="{ 'is-selected': local.offPeak === false, 'is-error': offPeakError }"
-        @click="pickOffPeak(false)"
-      >No</button>
-    </div>
-    <FieldError :show="offPeakError" message="Let us know if this is an off-peak car." />
+    <!-- Q3 — revealed after Q2 -->
+    <template v-if="showOffPeak">
+      <p class="field-label">Is this an off-peak car?</p>
+      <div class="yes-no" :data-error="offPeakError ? 'true' : null">
+        <button
+          type="button"
+          class="yn-button"
+          :class="{ 'is-selected': local.offPeak === true, 'is-error': offPeakError }"
+          @click="pickOffPeak(true)"
+        >Yes</button>
+        <button
+          type="button"
+          class="yn-button"
+          :class="{ 'is-selected': local.offPeak === false, 'is-error': offPeakError }"
+          @click="pickOffPeak(false)"
+        >No</button>
+      </div>
+      <FieldError :show="offPeakError" message="Tell us if your car is off-peak." />
+    </template>
 
     <StickyNext :disabled="!canContinue" @blocked="reveal" />
   </section>
@@ -131,12 +151,12 @@ const offPeakError = computed(() => showErrors.value && local.offPeak === null)
   gap: 16px;
 }
 
-.card-stack { display: flex; flex-direction: column; gap: 8px; }
+.card-stack { display: flex; flex-direction: column; gap: 16px; }
 
 .choice-card {
   display: flex;
-  align-items: flex-start;
-  gap: 12px;
+  align-items: center;
+  gap: 16px;
   width: 100%;
   background: #fff;
   border: 1px solid var(--bdi-grey-200);
@@ -146,8 +166,7 @@ const offPeakError = computed(() => showErrors.value && local.offPeak === null)
   cursor: pointer;
 }
 .choice-card:hover { border-color: var(--bdi-grey-500); }
-.choice-card.is-selected {
-  border-color: var(--bdi-green);}
+.choice-card.is-selected { border-color: var(--bdi-green); }
 .choice-card.is-error { border-color: var(--bdi-red); }
 
 .choice-radio {
@@ -155,35 +174,53 @@ const offPeakError = computed(() => showErrors.value && local.offPeak === null)
   width: 16px;
   height: 16px;
   border-radius: 50%;
-  border: 1.5px solid var(--bdi-grey-500);
+  border: 1px solid var(--bdi-grey-500);
+  background: #fff;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  margin-top: 2px;
 }
 .choice-radio.is-on { border-color: var(--bdi-green); }
-.choice-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--bdi-green); }
+.choice-dot {
+  width: 10.66px;
+  height: 10.66px;
+  border-radius: 50%;
+  background: #fff;
+}
+.choice-radio.is-on .choice-dot { background: var(--bdi-green); }
 
-.choice-text { display: flex; flex-direction: column; gap: 4px; }
-.choice-title { font-size: 14px; font-weight: 900; color: var(--bdi-carbon); }
-.choice-desc { font-size: 12px; font-weight: 500; color: var(--bdi-carbon); line-height: 1.4; }
+.choice-text { display: flex; flex-direction: column; gap: 4px; flex: 1; }
+.choice-title { font-size: 14px; font-weight: 700; color: var(--bdi-carbon); }
+.choice-desc { font-size: 12px; font-weight: 400; color: var(--bdi-carbon); line-height: 1.4; }
 
 .disclaimer {
-  margin: 0;
-  background: var(--bdi-grey-100);
-  border: 1px solid #CCCCCC;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--bdi-grey-200);
+  border: 1px solid #D6D3D1;
   border-radius: var(--bdi-radius-card);
-  padding: 8px 16px;
-  font-size: 14px;
-  font-weight: 500;
+  padding: 8px;
+}
+.disclaimer-icon {
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
   color: var(--bdi-carbon);
 }
-.disclaimer strong { font-weight: 900; }
+.disclaimer-text {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--bdi-carbon);
+  line-height: 1.4;
+}
+.disclaimer-text strong { font-weight: 700; }
 
 .field-label {
   margin: 8px 0 0 0;
   font-size: 14px;
-  font-weight: 500;
+  font-weight: 400;
   color: var(--bdi-carbon);
   line-height: 1.4;
 }
@@ -196,11 +233,10 @@ const offPeakError = computed(() => showErrors.value && local.offPeak === null)
   border-radius: var(--bdi-radius-card);
   padding: 12px 16px;
   font-size: 14px;
-  font-weight: 700;
+  font-weight: 600;
   color: var(--bdi-carbon);
   cursor: pointer;
 }
-.yn-button.is-selected {
-  border-color: var(--bdi-green);}
+.yn-button.is-selected { border-color: var(--bdi-green); }
 .yn-button.is-error { border-color: var(--bdi-red); }
 </style>
