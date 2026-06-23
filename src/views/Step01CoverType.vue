@@ -36,7 +36,7 @@ function select(value) {
 
 <template>
   <section class="step">
-    <h1 class="bdi-section-title">What cover do you need?</h1>
+    <h1 class="bdi-section-title">Which cover do you need?</h1>
 
     <div
       class="cover-options"
@@ -55,7 +55,7 @@ function select(value) {
         @click="select(opt.value)"
       >
         <span class="cover-radio" :class="{ 'is-on': quote.coverType === opt.value }">
-          <span v-if="quote.coverType === opt.value" class="cover-radio-dot" />
+          <span class="cover-radio-dot" />
         </span>
         <span class="cover-text">
           <span class="cover-title">{{ opt.title }}</span>
@@ -111,7 +111,8 @@ function select(value) {
   width: 16px;
   height: 16px;
   border-radius: 50%;
-  border: 1.5px solid var(--bdi-grey-500);
+  border: 1px solid var(--bdi-grey-500);
+  background: var(--bdi-white);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -121,13 +122,16 @@ function select(value) {
   border-color: var(--bdi-green);
 }
 .cover-radio-dot {
-  width: 8px;
-  height: 8px;
+  width: 10.66px;
+  height: 10.66px;
   border-radius: 50%;
+  background: var(--bdi-white);
+}
+.cover-radio.is-on .cover-radio-dot {
   background: var(--bdi-green);
 }
 
 .cover-text { display: flex; flex-direction: column; gap: 4px; }
-.cover-title { font-size: 14px; font-weight: 900; color: var(--bdi-carbon); }
-.cover-desc { font-size: 12px; font-weight: 500; color: var(--bdi-carbon); line-height: 1.4; }
+.cover-title { font-size: 14px; font-weight: 700; color: var(--bdi-carbon); }
+.cover-desc { font-size: 12px; font-weight: 400; color: var(--bdi-carbon); line-height: 1.4; }
 </style>

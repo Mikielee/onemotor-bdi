@@ -43,8 +43,8 @@ const activeGroup = computed(() => route.meta?.group ?? 0)
   gap: 8px;
 }
 .bdi-step-label {
-  font-size: 11px;
-  font-weight: 500;
+  font-size: 10px;
+  font-weight: 400;
   color: var(--bdi-grey-600);
   text-align: center;
   line-height: 1.3;

@@ -91,7 +91,7 @@
   border: 1px solid var(--bdi-grey-200);
   border-radius: var(--bdi-radius-pill);
   color: var(--bdi-carbon);
-  font-weight: 700;
+  font-weight: 600;
   font-size: 14px;
   cursor: pointer;
 }
