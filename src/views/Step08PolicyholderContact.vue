@@ -130,19 +130,21 @@ function onNext() {
 
     <div class="channels">
       <p class="channels-title">Keep me updated for any special deals.</p>
-      <button
-        v-for="ch in channels"
-        :key="ch"
-        type="button"
-        class="channel-card"
-        :class="{ 'is-on': local.marketingChannels.includes(ch) }"
-        @click="toggleChannel(ch)"
-      >
-        <span class="channel-box" :class="{ 'is-on': local.marketingChannels.includes(ch) }">
-          <span v-if="local.marketingChannels.includes(ch)" class="channel-tick">&check;</span>
-        </span>
-        <span class="channel-label">{{ ch }}</span>
-      </button>
+      <div class="channels-cards">
+        <button
+          v-for="ch in channels"
+          :key="ch"
+          type="button"
+          class="channel-card"
+          :class="{ 'is-on': local.marketingChannels.includes(ch) }"
+          @click="toggleChannel(ch)"
+        >
+          <span class="channel-box" :class="{ 'is-on': local.marketingChannels.includes(ch) }">
+            <span v-if="local.marketingChannels.includes(ch)" class="channel-tick">&check;</span>
+          </span>
+          <span class="channel-label">{{ ch }}</span>
+        </button>
+      </div>
     </div>
 
     <div :data-error="pdpaError ? 'true' : null">
@@ -214,6 +216,22 @@ function onNext() {
   font-size: 16px;
   font-weight: 700;
   color: var(--bdi-carbon);
+}
+/* Desktop (≥768px): channels lay out horizontally per Figma 3997:7960
+   — title sits above, then 3 cards side-by-side. */
+@media (min-width: 768px) {
+  .channels { gap: 12px; }
+  .channels-cards {
+    display: flex;
+    flex-direction: row;
+    gap: 12px;
+  }
+  .channels-cards .channel-card { flex: 1 1 0; }
+}
+.channels-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 .channel-card {
   display: flex;
