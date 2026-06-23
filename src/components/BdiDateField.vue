@@ -165,7 +165,7 @@ onBeforeUnmount(() => document.removeEventListener('mousedown', onDocClick))
 .bdi-datefield.is-filled,
 .bdi-datefield.is-focused { border-color: var(--bdi-green); }
 .bdi-datefield.is-error { border-color: var(--bdi-red); }
-.bdi-datefield.is-disabled { background: var(--bdi-grey-200); }
+.bdi-datefield.is-disabled { background: var(--bdi-grey-100); }
 
 .bdi-datefield-input {
   flex: 1 1 auto;
@@ -174,13 +174,13 @@ onBeforeUnmount(() => document.removeEventListener('mousedown', onDocClick))
   background: transparent;
   font-family: var(--bdi-font);
   font-size: 16px;
-  font-weight: 500;
+  font-weight: 400;
   color: var(--bdi-carbon);
   padding: 0 8px 0 16px;
   min-height: calc(var(--bdi-field-height) - 2px);
   border-radius: var(--bdi-radius-card);
 }
-.bdi-datefield-input::placeholder { color: var(--bdi-grey-600); font-weight: 500; }
+.bdi-datefield-input::placeholder { color: var(--bdi-grey-600); font-weight: 600; }
 
 /* Icon sits inside the field, no box. */
 .bdi-datefield-icon {
