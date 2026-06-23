@@ -41,7 +41,7 @@ const notAtFaultOptions = [
   { label: '5+', value: 5 },
 ]
 
-// NCD follow-up options (Figma 4708-3143).
+// NCD = 0% follow-up reasons.
 const ncdZeroReasonOptions = [
   { label: 'New driver', value: 'new-driver' },
   { label: 'No previous insurance', value: 'no-previous-insurance' },
@@ -53,11 +53,6 @@ const transferredFromOptions = [
   { label: 'Current insurer', value: 'current' },
   { label: 'Previous insurer', value: 'previous' },
 ]
-const fiftyYearsOptions = [
-  { label: '1 year', value: 1 },
-  { label: '2 years', value: 2 },
-  { label: '3 years or more', value: 3 },
-]
 
 const local = reactive({
   yearsLicensed: quote.drivingHistory?.yearsLicensed ?? null,
@@ -68,7 +63,6 @@ const local = reactive({
   ncdZeroReason: quote.drivingHistory?.ncdZeroReason ?? null,
   otherCarNcd: quote.drivingHistory?.otherCarNcd ?? null,
   transferredFrom: quote.drivingHistory?.transferredFrom ?? null,
-  fiftyYears: quote.drivingHistory?.fiftyYears ?? null,
 })
 
 function sync() {
@@ -82,7 +76,6 @@ function sync() {
     ncdZeroReason: local.ncdZeroReason,
     otherCarNcd: local.otherCarNcd,
     transferredFrom: local.transferredFrom,
-    fiftyYears: local.fiftyYears,
   }
 }
 
@@ -92,9 +85,7 @@ function setCertOfMerit(v) { local.certOfMerit = v; sync() }
 function onYearsChange(v) { local.yearsLicensed = v; sync() }
 function onNcdChange(v) {
   local.ncd = v
-  // Reset follow-ups that no longer apply.
   if (v !== 0) { local.ncdZeroReason = null; local.otherCarNcd = null; local.transferredFrom = null }
-  if (v !== 50) { local.fiftyYears = null }
   sync()
 }
 function onZeroReasonChange(v) {
@@ -104,12 +95,9 @@ function onZeroReasonChange(v) {
 }
 function onOtherCarNcdChange(v) { local.otherCarNcd = v; sync() }
 function onTransferredChange(v) { local.transferredFrom = v; sync() }
-function onFiftyYearsChange(v) { local.fiftyYears = v; sync() }
 
-// Conditional follow-up visibility.
 const showZeroFollowup = computed(() => local.ncd === 0)
 const showOtherCar = computed(() => local.ncd === 0 && local.ncdZeroReason === 'ncd-other-car')
-const showFiftyFollowup = computed(() => local.ncd === 50)
 
 const canContinue = computed(() => {
   if (
@@ -124,7 +112,6 @@ const canContinue = computed(() => {
     if (local.ncdZeroReason === 'ncd-other-car'
       && (local.otherCarNcd === null || local.transferredFrom === null)) return false
   }
-  if (local.ncd === 50 && local.fiftyYears === null) return false
   return true
 })
 
@@ -136,7 +123,6 @@ const ncdError = computed(() => showErrors.value && local.ncd === null)
 const zeroReasonError = computed(() => showErrors.value && showZeroFollowup.value && local.ncdZeroReason === null)
 const otherCarError = computed(() => showErrors.value && showOtherCar.value && local.otherCarNcd === null)
 const transferredError = computed(() => showErrors.value && showOtherCar.value && local.transferredFrom === null)
-const fiftyYearsError = computed(() => showErrors.value && showFiftyFollowup.value && local.fiftyYears === null)
 </script>
 
 <template>
@@ -159,9 +145,13 @@ const fiftyYearsError = computed(() => showErrors.value && showFiftyFollowup.val
       <FieldError :show="yearsError" message="Please select years of driving experience." />
     </div>
 
+    <p class="prefix">
+      In the 3 years prior to the start of the policy, all drivers to be insured had the following:
+    </p>
+
     <div class="field" :data-error="atFaultError ? 'true' : null">
       <p class="field-label">
-        Total number of <strong>at-fault</strong> accidents and/or claims in the past 3 years
+        Total number of <strong>at-fault</strong> accidents and/or claims
       </p>
       <div class="chip-row">
         <button
@@ -178,7 +168,7 @@ const fiftyYearsError = computed(() => showErrors.value && showFiftyFollowup.val
 
     <div class="field" :data-error="notAtFaultError ? 'true' : null">
       <p class="field-label">
-        Total number of <strong>not-at-fault</strong> accidents and/or claims in the past 3 years
+        Total number of <strong>not-at-fault</strong> accidents and/or claims
       </p>
       <div class="chip-row">
         <button
@@ -213,7 +203,9 @@ const fiftyYearsError = computed(() => showErrors.value && showFiftyFollowup.val
     </div>
 
     <div class="field" :data-error="ncdError ? 'true' : null">
-      <label class="field-label">No Claim Discount (NCD) at renewal</label>
+      <p class="field-label">
+        <strong>Policyholder's</strong> No Claim Discount (NCD) at renewal
+      </p>
       <Select
         :model-value="local.ncd"
         @update:model-value="onNcdChange"
@@ -278,23 +270,6 @@ const fiftyYearsError = computed(() => showErrors.value && showFiftyFollowup.val
       <FieldError :show="transferredError" message="Please select where your NCD is transferred from." />
     </div>
 
-    <!-- NCD = 50% follow-up -->
-    <div v-if="showFiftyFollowup" class="field" :data-error="fiftyYearsError ? 'true' : null">
-      <label class="field-label">How many years has the vehicle held the 50% No Claims Discount?</label>
-      <Select
-        :model-value="local.fiftyYears"
-        @update:model-value="onFiftyYearsChange"
-        :options="fiftyYearsOptions"
-        option-label="label"
-        option-value="value"
-        placeholder=" "
-        class="bdi-select"
-        :class="{ 'is-error': fiftyYearsError }"
-        fluid
-      />
-      <FieldError :show="fiftyYearsError" message="Please select how long the 50% NCD has been held." />
-    </div>
-
     <StickyNext :disabled="!canContinue" @blocked="reveal" />
   </section>
 </template>
@@ -317,6 +292,14 @@ const fiftyYearsError = computed(() => showErrors.value && showFiftyFollowup.val
   line-height: 1.4;
 }
 .field-label strong { font-weight: 900; }
+
+.prefix {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 400;
+  color: var(--bdi-carbon);
+  line-height: 1.4;
+}
 
 .chip-row {
   display: flex;
