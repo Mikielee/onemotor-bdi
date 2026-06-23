@@ -57,12 +57,12 @@ const bandError = computed(() => showErrors.value && !local.band)
 
     <FieldError :show="bandError" message="Please select how far you drive in a year." />
 
-    <p class="callout">
-      <i class="pi pi-info-circle" aria-hidden="true"></i>
-      <span>
-        A 15 km daily commute each way, like Tampines to the CBD, with your weekend trips, is about 9,000 km a year.
-      </span>
-    </p>
+    <div class="callout">
+      <i class="pi pi-info-circle callout-icon" aria-hidden="true"></i>
+      <p class="callout-text">
+        A <strong>15 km</strong> daily commute each way, like Tampines to the CBD, with your weekend trips, is about <strong>9,000 km</strong> a year.
+      </p>
+    </div>
 
     <StickyNext :disabled="!canContinue" @blocked="reveal" />
   </section>
@@ -102,22 +102,30 @@ const bandError = computed(() => showErrors.value && !local.band)
 .distance-card.is-selected { border-color: var(--bdi-green); }
 .distance-card.is-error { border-color: var(--bdi-red); }
 
-/* Info callout — flat icon + text per Figma 3949:703 (no bg, no border). */
+/* Info callout — boxed grey card per Figma 3994:19086 (matches the
+   Step 4 disclaimer treatment: bdi-grey-200 bg, 1px #D6D3D1 border). */
 .callout {
   display: flex;
-  gap: 8px;
   align-items: flex-start;
+  gap: 12px;
   margin: 0;
-  padding: 4px 0;
-  font-size: 13px;
-  line-height: 1.5;
-  color: var(--bdi-carbon);
+  background: var(--bdi-grey-200);
+  border: 1px solid #D6D3D1;
+  border-radius: var(--bdi-radius-card);
+  padding: 16px;
 }
-.callout .pi {
+.callout-icon {
   color: var(--bdi-carbon);
   flex-shrink: 0;
-  margin-top: 1px;
-  font-size: 18px;
+  font-size: 20px;
+  margin-top: 2px;
 }
-.callout strong { font-weight: 700; }
+.callout-text {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--bdi-carbon);
+  line-height: 1.5;
+}
+.callout-text strong { font-weight: 700; }
 </style>
