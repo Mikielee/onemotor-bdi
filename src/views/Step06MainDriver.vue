@@ -1,20 +1,24 @@
 <script setup>
 import { computed, reactive } from 'vue'
-import BdiDateField from '../components/BdiDateField.vue'
+import InputText from 'primevue/inputtext'
 import Select from 'primevue/select'
+import BdiDateField from '../components/BdiDateField.vue'
 import StickyNext from '../components/StickyNext.vue'
 import FieldError from '../components/FieldError.vue'
 import { useQuote } from '../store/quote'
 import { useValidation } from '../composables/useValidation'
+import { validateNric } from '../utils/nric'
 
 const { quote, mutable } = useQuote()
 const { showErrors, reveal } = useValidation()
 
 const local = reactive({
+  name: quote.mainDriver?.name || '',
+  nric: quote.mainDriver?.nric || '',
   isPolicyholder: quote.mainDriver?.isPolicyholder ?? null,
-  dob: quote.mainDriver?.dob || null,
   gender: quote.mainDriver?.gender || '',
   maritalStatus: quote.mainDriver?.maritalStatus || '',
+  dob: quote.mainDriver?.dob || null,
 })
 
 const maritalOptions = [
@@ -24,38 +28,77 @@ const maritalOptions = [
   { label: 'Widowed', value: 'widowed' },
 ]
 
+function sync() {
+  mutable.mainDriver = {
+    ...quote.mainDriver,
+    name: local.name.trim(),
+    nric: local.nric.trim().toUpperCase(),
+    isPolicyholder: local.isPolicyholder,
+    gender: local.gender,
+    maritalStatus: local.maritalStatus,
+    dob: local.dob,
+  }
+}
+
+function onNricInput(v) { local.nric = (v || '').toUpperCase(); sync() }
 function pickPolicyholder(v) { local.isPolicyholder = v; sync() }
 function pickGender(v) { local.gender = v; sync() }
 function onDobChange(v) { local.dob = v; sync() }
 function onMaritalChange(v) { local.maritalStatus = v; sync() }
 
-function sync() {
-  mutable.mainDriver = {
-    ...quote.mainDriver,
-    isPolicyholder: local.isPolicyholder,
-    dob: local.dob,
-    gender: local.gender,
-    maritalStatus: local.maritalStatus,
-  }
-}
-
 const maxDob = new Date()
 
+const nricValid = computed(() => validateNric(local.nric))
+
 const canContinue = computed(() =>
-  local.isPolicyholder !== null && local.dob && local.gender && local.maritalStatus
+  local.name.trim().length > 0
+  && nricValid.value
+  && local.isPolicyholder !== null
+  && Boolean(local.gender)
+  && Boolean(local.maritalStatus)
+  && Boolean(local.dob)
 )
 
+const nameError = computed(() => showErrors.value && local.name.trim().length === 0)
+const nricError = computed(() => showErrors.value && !nricValid.value)
 const phError = computed(() => showErrors.value && local.isPolicyholder === null)
-const dobError = computed(() => showErrors.value && !local.dob)
 const genderError = computed(() => showErrors.value && !local.gender)
 const maritalError = computed(() => showErrors.value && !local.maritalStatus)
+const dobError = computed(() => showErrors.value && !local.dob)
 </script>
 
 <template>
   <section class="step">
-    <h1 class="bdi-section-title">Main driver details</h1>
+    <h1 class="bdi-section-title">Main driver's details</h1>
 
-    <!-- Order per Figma 4719-4828: Policyholder, Gender, Marital status, DOB. -->
+    <!-- Full name -->
+    <div class="field" :data-error="nameError ? 'true' : null">
+      <InputText
+        v-model="local.name"
+        @update:model-value="sync"
+        placeholder="Full name"
+        class="bdi-input"
+        :class="{ 'is-error': nameError }"
+        fluid
+      />
+      <FieldError :show="nameError" message="Enter the main driver's full name." />
+    </div>
+
+    <!-- NRIC / FIN -->
+    <div class="field" :data-error="nricError ? 'true' : null">
+      <InputText
+        :model-value="local.nric"
+        @update:model-value="onNricInput"
+        placeholder="NRIC / FIN"
+        class="bdi-input"
+        :class="{ 'is-error': nricError }"
+        maxlength="9"
+        fluid
+      />
+      <FieldError :show="nricError" message="Enter a valid NRIC or FIN." />
+    </div>
+
+    <!-- Is the main driver also the policyholder? -->
     <div class="field" :data-error="phError ? 'true' : null">
       <p class="field-label">Is the main driver also the policyholder?</p>
       <div class="yes-no">
@@ -78,6 +121,7 @@ const maritalError = computed(() => showErrors.value && !local.maritalStatus)
       />
     </div>
 
+    <!-- Gender -->
     <div class="field" :data-error="genderError ? 'true' : null">
       <p class="field-label">Gender</p>
       <div class="yes-no">
@@ -97,6 +141,7 @@ const maritalError = computed(() => showErrors.value && !local.maritalStatus)
       <FieldError :show="genderError" message="Please select your gender." />
     </div>
 
+    <!-- Marital status -->
     <div class="field" :data-error="maritalError ? 'true' : null">
       <Select
         :model-value="local.maritalStatus"
@@ -112,6 +157,7 @@ const maritalError = computed(() => showErrors.value && !local.maritalStatus)
       <FieldError :show="maritalError" message="Please select your marital status." />
     </div>
 
+    <!-- Date of birth -->
     <div class="field" :data-error="dobError ? 'true' : null">
       <label class="field-label" for="dob">Date of birth</label>
       <BdiDateField
@@ -160,10 +206,10 @@ const maritalError = computed(() => showErrors.value && !local.maritalStatus)
   cursor: pointer;
   font-family: var(--bdi-font);
 }
-.yn-button.is-selected {
-  border-color: var(--bdi-green);}
+.yn-button.is-selected { border-color: var(--bdi-green); }
 .yn-button.is-error { border-color: var(--bdi-red); }
 
+.step :deep(.bdi-input.p-inputtext),
 .step :deep(.bdi-input .p-inputtext) {
   font-family: var(--bdi-font);
   background: #fff;
@@ -174,14 +220,8 @@ const maritalError = computed(() => showErrors.value && !local.maritalStatus)
   color: var(--bdi-carbon);
   font-weight: 500;
   min-height: 56px;
-}
-.step :deep(.bdi-input .p-datepicker-trigger) {
-  background: transparent;
-  border: 0;
-  color: var(--bdi-carbon);
+  width: 100%;
 }
 
-/* Select styling comes from global style.css — no per-step overrides needed.
-   The global rule already paints filled text Carbon and placeholder Grey-600. */
 .step :deep(.bdi-select) { width: 100%; }
 </style>
