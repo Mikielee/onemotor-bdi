@@ -1,5 +1,6 @@
 <script setup>
-import { computed, reactive } from 'vue'
+import { computed, reactive, ref } from 'vue'
+import { useRouter } from 'vue-router'
 import InputText from 'primevue/inputtext'
 import StickyNext from '../components/StickyNext.vue'
 import FieldError from '../components/FieldError.vue'
@@ -8,12 +9,12 @@ import { useValidation } from '../composables/useValidation'
 
 const { quote, mutable } = useQuote()
 const { showErrors, reveal } = useValidation()
+const router = useRouter()
 
 const local = reactive({
   preferredName: quote.contact?.preferredName || '',
   email: quote.contact?.email || '',
   phone: quote.contact?.phone || '',
-  postalCode: quote.contact?.postalCode || '',
   marketingChannels: [...(quote.contact?.marketingChannels || [])],
   consentPdpa: quote.contact?.consentPdpa ?? false,
 })
@@ -24,7 +25,6 @@ function sync() {
     preferredName: local.preferredName,
     email: local.email,
     phone: local.phone,
-    postalCode: local.postalCode,
     marketingChannels: [...local.marketingChannels],
     consentPdpa: local.consentPdpa,
   }
@@ -45,27 +45,44 @@ function togglePdpa() {
 const channels = ['Email', 'SMS', 'Whatsapp']
 
 const emailValid = computed(() => /^\S+@\S+\.\S+$/.test(local.email))
-const phoneValid = computed(() => /^\d{8,}$/.test(local.phone.replace(/\s/g, '')))
-const postalValid = computed(() => /^\d{6}$/.test(local.postalCode))
+const phoneValid = computed(() => /^[89]\d{7}$/.test(local.phone.replace(/\s/g, '')))
 
 const canContinue = computed(() =>
   local.preferredName.trim().length > 0
   && emailValid.value
   && phoneValid.value
-  && postalValid.value
   && local.consentPdpa
 )
 
 const nameError = computed(() => showErrors.value && local.preferredName.trim().length === 0)
 const emailError = computed(() => showErrors.value && !emailValid.value)
 const phoneError = computed(() => showErrors.value && !phoneValid.value)
-const postalError = computed(() => showErrors.value && !postalValid.value)
 const pdpaError = computed(() => showErrors.value && !local.consentPdpa)
+
+// First IDIT call simulation: Next reveals a holding overlay for ~2.5s,
+// then routes to Step 9 (Your Quote). Real implementation replaces the
+// setTimeout with the IDIT POST + success handler.
+const loading = ref(false)
+const educationalTips = [
+  'Comprehensive cover protects you against accidents, theft, and third-party claims.',
+  'No Claim Discount rewards careful drivers with up to 50% off.',
+  'Adding a named driver can lower your premium if they have a clean record.',
+]
+const currentTip = ref(educationalTips[0])
+
+function onNext() {
+  loading.value = true
+  currentTip.value = educationalTips[Math.floor(Math.random() * educationalTips.length)]
+  setTimeout(() => {
+    loading.value = false
+    router.push('/step/9')
+  }, 2500)
+}
 </script>
 
 <template>
   <section class="step">
-    <h1 class="bdi-section-title">How can we reach you?</h1>
+    <h1 class="bdi-section-title">How should we contact you?</h1>
 
     <div class="fields">
       <div class="field" :data-error="nameError ? 'true' : null">
@@ -103,24 +120,11 @@ const pdpaError = computed(() => showErrors.value && !local.consentPdpa)
             class="bdi-input phone-input"
             :class="{ 'is-error': phoneError }"
             inputmode="numeric"
+            maxlength="8"
             fluid
           />
         </div>
-        <FieldError :show="phoneError" message="Enter a valid mobile number." />
-      </div>
-
-      <div class="field" :data-error="postalError ? 'true' : null">
-        <InputText
-          v-model="local.postalCode"
-          @update:model-value="sync"
-          placeholder="Postal Code"
-          class="bdi-input"
-          :class="{ 'is-error': postalError }"
-          inputmode="numeric"
-          maxlength="6"
-          fluid
-        />
-        <FieldError :show="postalError" message="Enter a valid 6-digit postal code." />
+        <FieldError :show="phoneError" message="Enter a valid SG mobile (8 digits, starts with 8 or 9)." />
       </div>
     </div>
 
@@ -147,14 +151,23 @@ const pdpaError = computed(() => showErrors.value && !local.consentPdpa)
           <span v-if="local.consentPdpa" class="channel-tick">&check;</span>
         </span>
         <span class="pdpa-text">
-          I acknowledge and agree to the collection, use and disclosure of my personal data which has been provided for the purposes of procuring insurance products &amp; services as per the DirectAsia
-          <a href="https://www.directasia.com/security-privacy/" target="_blank" rel="noopener" @click.stop>Personal Data Protection Statement</a>.
+          I acknowledge and agree to the collection, use and disclosure of my personal data which has been provided for the purposes of procuring insurance products &amp; services as per the Budget Direct
+          <a href="https://www.budgetdirect.com.sg/security-privacy" target="_blank" rel="noopener" @click.stop>Personal Data Protection Statement</a>.
         </span>
       </button>
       <FieldError :show="pdpaError" message="Please accept the Personal Data Protection Statement to continue." />
     </div>
 
-    <StickyNext :disabled="!canContinue" @blocked="reveal" />
+    <StickyNext :disabled="!canContinue" :intercept-next="true" @blocked="reveal" @next="onNext" />
+
+    <!-- First IDIT call: holding overlay -->
+    <div v-if="loading" class="loading-overlay" role="alert" aria-live="polite">
+      <div class="loading-card">
+        <div class="spinner" aria-hidden="true"></div>
+        <p class="loading-title">Just a moment</p>
+        <p class="loading-tip">{{ currentTip }}</p>
+      </div>
+    </div>
   </section>
 </template>
 
@@ -279,5 +292,48 @@ const pdpaError = computed(() => showErrors.value && !local.consentPdpa)
 }
 .phone-row :deep(.phone-input.p-inputtext) {
   border-radius: 0 var(--bdi-radius-card) var(--bdi-radius-card) 0;
+}
+
+.loading-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(245, 245, 245, 0.92);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 24px;
+}
+.loading-card {
+  max-width: 320px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+.spinner {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  border: 6px solid var(--bdi-grey-200);
+  border-top-color: var(--bdi-red, #DA291C);
+  animation: spin 0.9s linear infinite;
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+.loading-title {
+  margin: 4px 0 0 0;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--bdi-carbon);
+}
+.loading-tip {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--bdi-carbon);
+  line-height: 1.5;
 }
 </style>

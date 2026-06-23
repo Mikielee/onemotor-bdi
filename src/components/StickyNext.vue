@@ -9,12 +9,15 @@ const props = defineProps({
   label: { type: String, default: 'Next' },
   hideBack: { type: Boolean, default: false },
   price: { type: String, default: '' },
+  // When true, a valid Next click emits `next` instead of routing.
+  // Use this when the step needs to run async work (e.g. an IDIT call
+  // with a holding spinner) before navigating itself.
+  interceptNext: { type: Boolean, default: false },
 })
 
 // `blocked` fires when the user clicks Next while the step is still invalid.
-// The parent step listens for it to reveal field errors and scroll to the
-// first one. See composables/useValidation.js.
-const emit = defineEmits(['blocked'])
+// `next` fires when the parent opted into intercept and the click was valid.
+const emit = defineEmits(['blocked', 'next'])
 
 const router = useRouter()
 const route = useRoute()
@@ -27,6 +30,10 @@ function onNext() {
   // reveals the errors instead of navigating.
   if (props.disabled) {
     emit('blocked')
+    return
+  }
+  if (props.interceptNext) {
+    emit('next')
     return
   }
   if (props.to !== null) {
