@@ -60,8 +60,7 @@ const bandError = computed(() => showErrors.value && !local.band)
     <p class="callout">
       <i class="pi pi-info-circle" aria-hidden="true"></i>
       <span>
-        Most Singapore drivers cover under 8,000km a year. As a rough guide,
-        <strong>22km a day = 154km a week = around 8,000km a year</strong>.
+        A 15 km daily commute each way, like Tampines to the CBD, with your weekend trips, is about 9,000 km a year.
       </span>
     </p>
 
@@ -92,7 +91,7 @@ const bandError = computed(() => showErrors.value && !local.band)
   padding: 16px 12px;
   min-height: 58px;
   font-size: 14px;
-  font-weight: 500;
+  font-weight: 600;
   color: var(--bdi-carbon);
   text-align: center;
   cursor: pointer;
@@ -103,24 +102,22 @@ const bandError = computed(() => showErrors.value && !local.band)
 .distance-card.is-selected { border-color: var(--bdi-green); }
 .distance-card.is-error { border-color: var(--bdi-red); }
 
-/* Info callout under the bands — pattern is shared with step 10. */
+/* Info callout — flat icon + text per Figma 3949:703 (no bg, no border). */
 .callout {
   display: flex;
   gap: 8px;
   align-items: flex-start;
   margin: 0;
-  background: var(--bdi-grey-100);
-  border: 1px solid var(--bdi-grey-200);
-  border-radius: var(--bdi-radius-card);
-  padding: 12px;
+  padding: 4px 0;
   font-size: 13px;
   line-height: 1.5;
   color: var(--bdi-carbon);
 }
 .callout .pi {
-  color: var(--bdi-cyan);
+  color: var(--bdi-carbon);
   flex-shrink: 0;
   margin-top: 1px;
+  font-size: 18px;
 }
 .callout strong { font-weight: 700; }
 </style>
