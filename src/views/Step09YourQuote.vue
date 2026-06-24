@@ -89,12 +89,14 @@ const instalmentValue = computed(() => annualTotal.value / 12)
 const heroAmount = computed(() =>
   local.paymentTerm === 'instalment' ? formatMoney(instalmentValue.value) : formatMoney(annualTotal.value)
 )
-// Cover term is 7–18 months (KB f1898394), so "per year" would be inaccurate
-// and could fall foul of MAS premium-display rules. Use "Total (incl. GST)"
+// Cover term is 7–18 months (KB #11 / f1898394), so "per year" would be
+// inaccurate and could fall foul of MAS premium-display rules. Use "Total"
 // for Single (no time claim, term is detailed in the policy itself), and
-// "per month (incl. GST)" for Instalment (factually correct billing cadence).
+// "per month" for Instalment (factually correct billing cadence). We drop
+// the "(incl. GST)" subtitle because GST is already a line item in the
+// breakdown directly below — repeating it would be redundant noise.
 const heroUnit = computed(() =>
-  local.paymentTerm === 'instalment' ? 'per month (incl. GST)' : 'Total (incl. GST)'
+  local.paymentTerm === 'instalment' ? 'per month' : 'Total'
 )
 
 // Coverage rows — Figma 4148-3290. Each row has a label, a `value` that
@@ -406,13 +408,20 @@ const stickyUnit = computed(() =>
         <div class="sticky-breakdown">
           <p class="sb-title">Comprehensive</p>
           <div class="sb-row">
-            <span>Subtotal</span><span>{{ formatMoney(baseSubtotal) }}</span>
+            <span>Subtotal</span><span>{{ formatMoney(subtotalWithAdjust - medicalExpenses) }}</span>
           </div>
           <div v-if="hasPersonalAccident" class="sb-row">
             <span>Medical expenses</span><span>{{ formatMoney(medicalExpenses) }}</span>
           </div>
+          <div class="sb-row">
+            <span>GST (9%)</span><span>{{ formatMoney(gstAmount) }}</span>
+          </div>
           <div v-if="local.paymentTerm === 'single'" class="sb-row sb-discount">
             <span>Single payment 3% discount</span><span>Included</span>
+          </div>
+          <div v-if="local.appliedPromo" class="sb-row sb-discount">
+            <span>Promo ({{ local.appliedPromo.code }})</span>
+            <span>{{ local.appliedPromo.benefit }}</span>
           </div>
         </div>
       </div>
@@ -428,7 +437,6 @@ const stickyUnit = computed(() =>
             <span class="sp-green">{{ stickyAmount }}</span>
             <span class="sp-unit">{{ stickyUnit }}</span>
           </p>
-          <p class="sp-gst">(incl. GST)</p>
         </div>
 
         <button type="button" class="sticky-buy" @click="onBuy">Next</button>
@@ -951,12 +959,5 @@ const stickyUnit = computed(() =>
   font-size: 14px;
   font-weight: 500;
   line-height: 20px;
-}
-.sp-gst {
-  margin: 0;
-  color: var(--bdi-carbon);
-  font-size: 13px;
-  font-weight: 500;
-  line-height: 18px;
 }
 </style>
