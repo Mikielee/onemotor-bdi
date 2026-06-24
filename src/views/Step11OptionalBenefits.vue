@@ -1,4 +1,20 @@
 <script setup>
+/**
+ * Step 11 — Optional Benefits (OMP-362).
+ * Figma BD/DA mobile reference: 4015-974 (canvas), 5584:1218 (collapsed),
+ * 5553:7827 / 5553:9633 (expanded).
+ *
+ * 10 optional add-ons. By default we only show the top 3 (the two Recommended
+ * picks + Any Workshop). The remaining 7 sit behind a "Show more optional
+ * benefits" button so the page stays scannable. Each card has:
+ *   - optional Recommended pill at the top-left corner
+ *   - title + price + toggle on a single row
+ *   - description + Learn more link
+ *
+ * Selection is persisted to quote.optionalBenefits. Prices are flat $8.11
+ * placeholders for the prototype; real values come from IDIT pricing on
+ * each toggle in production.
+ */
 import { computed, ref } from 'vue'
 import StickyNext from '../components/StickyNext.vue'
 import { useQuote } from '../store/quote'
@@ -6,24 +22,85 @@ import { formatMoney } from '../utils/money'
 
 const { quote, mutable } = useQuote()
 
-// NCD Protector is NOT shown to users — internal memory rule from product.
-// `price` is a raw number; the template formats with the global money helper.
 const benefits = [
   {
-    id: 'breakdown-assistance',
-    title: '24-hour Breakdown Assistance',
+    id: 'ncd-protector',
+    title: 'NCD Protector',
+    price: 8.11,
+    blurb: 'Protect your No Claim Discount even if you make a claim. Your NCD stays unchanged at renewal.',
+    recommended: true,
+  },
+  {
+    id: 'roadside-assistance',
+    title: '24-hour Roadside Assistance',
     price: 8.11,
     blurb: 'Round-the-clock help if your car breaks down, including tow-to-workshop service.',
     recommended: true,
   },
   {
+    id: 'any-workshop',
+    title: 'Any Workshop',
+    price: 8.11,
+    blurb: 'Choose any workshop for repairs, not just our authorised network.',
+    recommended: false,
+  },
+  {
+    id: 'new-for-old',
+    title: 'New for Old Replacement Car',
+    price: 8.11,
+    blurb: 'Get a brand-new replacement car if yours is written off within the first 24 months.',
+    recommended: false,
+  },
+  {
+    id: 'medical-expenses',
+    title: 'Medical Expenses',
+    price: 8.11,
+    blurb: "Cover for medical bills if you're injured in a covered accident.",
+    recommended: false,
+  },
+  {
+    id: 'overseas-emergency',
+    title: 'Overseas Emergency Allowance / Repatriation',
+    price: 8.11,
+    blurb: 'Daily allowance and repatriation support when driving in Malaysia or southern Thailand.',
+    recommended: false,
+  },
+  {
     id: 'personal-accident',
-    title: 'Personal accident',
+    title: 'Personal Accident',
     price: 8.11,
     blurb: 'A lump-sum payment if a covered accident leads to death or permanent disability.',
     recommended: false,
   },
+  {
+    id: 'transport-allowance',
+    title: 'Transport Allowance / Loss of Use',
+    price: 8.11,
+    blurb: 'Daily allowance for alternative transport while your car is being repaired.',
+    recommended: false,
+  },
+  {
+    id: 'windscreen-cover',
+    title: 'Windscreen Cover Add-On',
+    price: 8.11,
+    blurb: 'Cover for windscreen and window damage with no impact on your NCD.',
+    recommended: false,
+  },
+  {
+    id: 'ev-addon',
+    title: 'EV Add-on Pack',
+    price: 8.11,
+    blurb: 'Cover for charging cables, wall chargers, and battery-related damage for electric vehicles.',
+    recommended: false,
+  },
 ]
+
+const TOP_COUNT = 3
+const expanded = ref(false)
+
+const visibleBenefits = computed(() =>
+  expanded.value ? benefits : benefits.slice(0, TOP_COUNT),
+)
 
 const selected = ref(new Set(quote.optionalBenefits || []))
 
@@ -44,7 +121,7 @@ const canContinue = computed(() => true)
 
     <div class="benefits">
       <div
-        v-for="b in benefits"
+        v-for="b in visibleBenefits"
         :key="b.id"
         class="benefit-card"
         :class="{ 'is-on': selected.has(b.id) }"
@@ -52,23 +129,33 @@ const canContinue = computed(() => true)
         <div v-if="b.recommended" class="badge">Recommended</div>
         <div class="benefit-row">
           <p class="benefit-title">{{ b.title }}</p>
+          <span class="benefit-price">{{ formatMoney(b.price) }}</span>
           <button
             type="button"
             class="switch"
             :class="{ 'is-on': selected.has(b.id) }"
             :aria-pressed="selected.has(b.id)"
+            :aria-label="`${b.title} ${selected.has(b.id) ? 'on' : 'off'}`"
             @click="toggle(b.id)"
           >
             <span class="switch-handle" />
           </button>
         </div>
-        <div class="price-pill">{{ formatMoney(b.price) }}</div>
         <p class="benefit-blurb">{{ b.blurb }}</p>
         <a href="#" class="learn-more">Learn more</a>
       </div>
     </div>
 
-    <StickyNext :disabled="!canContinue" label="Get my quote" />
+    <button
+      type="button"
+      class="show-more"
+      :aria-expanded="expanded"
+      @click="expanded = !expanded"
+    >
+      {{ expanded ? 'Show fewer optional benefits' : 'Show more optional benefits' }}
+    </button>
+
+    <StickyNext :disabled="!canContinue" />
   </section>
 </template>
 
@@ -86,6 +173,8 @@ const canContinue = computed(() => true)
   gap: 24px;
 }
 
+/* Card: white bg, subtle shadow, light grey border by default; green border
+   when the toggle is on. Recommended badge floats over the top edge. */
 .benefit-card {
   position: relative;
   background: #fff;
@@ -114,19 +203,28 @@ const canContinue = computed(() => true)
   border-radius: 30px;
 }
 
+/* Title + price + toggle on a single row. Title flexes; price stays right
+   of title; toggle is fixed-width at the far right. */
 .benefit-row {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 8px;
+  gap: 12px;
 }
 
 .benefit-title {
   margin: 0;
   font-size: 16px;
-  font-weight: 900;
+  font-weight: 700;
   color: var(--bdi-carbon);
   flex: 1;
+  line-height: 1.3;
+}
+
+.benefit-price {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--bdi-carbon);
+  flex-shrink: 0;
 }
 
 .switch {
@@ -160,20 +258,10 @@ const canContinue = computed(() => true)
   background: #fff;
 }
 
-.price-pill {
-  align-self: flex-start;
-  background: var(--bdi-grey-100);
-  border-radius: var(--bdi-radius-card);
-  padding: 4px 8px;
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--bdi-carbon);
-}
-
 .benefit-blurb {
   margin: 0;
   font-size: 14px;
-  font-weight: 500;
+  font-weight: 400;
   color: var(--bdi-carbon);
   line-height: 1.5;
 }
@@ -183,6 +271,24 @@ const canContinue = computed(() => true)
   font-weight: 700;
   color: var(--bdi-cyan);
   text-decoration: none;
+  align-self: flex-start;
 }
 .learn-more:hover { text-decoration: underline; }
+
+/* Full-width outlined toggle for showing the rest of the benefits. */
+.show-more {
+  width: 100%;
+  background: #fff;
+  border: 1px solid var(--bdi-grey-300);
+  border-radius: var(--bdi-radius-card);
+  padding: 16px;
+  min-height: 56px;
+  font-family: var(--bdi-font);
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--bdi-carbon);
+  cursor: pointer;
+  text-align: center;
+}
+.show-more:hover { background: var(--bdi-grey-100); }
 </style>
