@@ -1,8 +1,29 @@
 <script setup>
-import { computed, reactive } from 'vue'
+/**
+ * Step 12 — Policyholder Additional Details (OMP-651).
+ * Figma BD/DA mobile reference: 4962-3081 canvas → 5281:1683 mobile mock.
+ *
+ * One screen, three sections:
+ *   1. Your Details (full name, NRIC, DOB, gender, email, mobile, NCD)
+ *   2. Your Address (postal code → autofill block + street; manual unit + bldg)
+ *   3. Keep me updated for any special deals (marketing prefs)
+ *
+ * Prefill rules:
+ *   - DOB + Gender pulled from Step 6 main driver if isPolicyholder === true
+ *   - Email + Mobile pulled from Step 8 contact
+ *   - NCD pulled from Step 7 driving history
+ *   - Marketing channels pulled from Step 8 contact (decision pending —
+ *     KB 98cd9339 hasn't landed, so we keep both Step 8 + Step 12 for now)
+ *   - Full name + NRIC are still manual capture — never collected pre-Step 12
+ *
+ * Car details (registration, insurer, last claim, ownership) moved out of
+ * Step 12 per Figma — they belong on Step 13 now (OMP-85).
+ */
+import { computed, reactive, watch } from 'vue'
 import InputText from 'primevue/inputtext'
 import Select from 'primevue/select'
-import StickyNext from '../components/StickyNext.vue'
+import BdiDateField from '../components/BdiDateField.vue'
+import BdiQuoteFooter from '../components/BdiQuoteFooter.vue'
 import FieldError from '../components/FieldError.vue'
 import { useQuote } from '../store/quote'
 import { useValidation } from '../composables/useValidation'
@@ -11,42 +32,75 @@ import { validateNric, lookupPostal } from '../utils/nric'
 const { quote, mutable } = useQuote()
 const { showErrors, reveal } = useValidation()
 
+// Prefill helpers — pull from the prior steps where the same data lives.
+const mainDriverIsPolicyholder = computed(
+  () => quote.mainDriver?.isPolicyholder === true,
+)
+const prefilledDob = computed(() =>
+  mainDriverIsPolicyholder.value ? quote.mainDriver?.dob ?? null : null,
+)
+const prefilledGender = computed(() =>
+  mainDriverIsPolicyholder.value ? quote.mainDriver?.gender ?? '' : '',
+)
+
 const local = reactive({
   // Your Details
   fullName: quote.policyholder?.fullName || '',
   nric: quote.policyholder?.nric || '',
-  // Your Address — postcode prefilled from Step 8 contact if available
+  dob: quote.policyholder?.dob || prefilledDob.value,
+  gender: quote.policyholder?.gender || prefilledGender.value,
+  email: quote.policyholder?.email || quote.contact?.email || '',
+  phone: quote.policyholder?.phone || quote.contact?.phone || '',
+  ncd: quote.policyholder?.ncd ?? quote.drivingHistory?.ncd ?? null,
+  // Your Address — postal code triggers block + street auto-fill
   postalCode: quote.policyholder?.address?.postalCode || quote.contact?.postalCode || '',
   block: quote.policyholder?.address?.block || '',
   street: quote.policyholder?.address?.street || '',
   unit: quote.policyholder?.address?.unit || '',
   buildingName: quote.policyholder?.address?.buildingName || '',
-  // Your Car Details — BD scope (odometer is DA-only per KB #7)
-  registrationNumber: quote.policyholder?.carDetails?.registrationNumber || '',
-  currentInsurer: quote.policyholder?.carDetails?.currentInsurer || '',
-  accidentClaimDate: quote.policyholder?.carDetails?.accidentClaimDate || '',
-  ownership: quote.policyholder?.carDetails?.ownership || '',
+  // Marketing — prefilled from Step 8 if user already picked there
+  marketingChannels: [
+    ...(quote.policyholder?.marketingChannels
+      || quote.contact?.marketingChannels
+      || []),
+  ],
 })
 
-const insurerOptions = [
-  { label: 'AIG', value: 'AIG' },
-  { label: 'AXA / EQ Insurance', value: 'AXA' },
-  { label: 'DirectAsia', value: 'DirectAsia' },
-  { label: 'FWD', value: 'FWD' },
-  { label: 'HL Assurance', value: 'HLA' },
-  { label: 'Income (NTUC)', value: 'Income' },
-  { label: 'MSIG', value: 'MSIG' },
-  { label: 'Sompo', value: 'Sompo' },
-  { label: 'Tokio Marine', value: 'TokioMarine' },
-  { label: 'Other', value: 'Other' },
-  { label: "I don't have one", value: 'None' },
+const ncdOptions = [
+  { label: '0%', value: 0 },
+  { label: '10%', value: 10 },
+  { label: '20%', value: 20 },
+  { label: '30%', value: 30 },
+  { label: '40%', value: 40 },
+  { label: '50%', value: 50 },
 ]
+
+const channels = ['Email', 'SMS', 'Whatsapp']
+
+// Postal code → auto-fill block + street. Unit + building stay manual.
+watch(
+  () => local.postalCode,
+  (code) => {
+    if (!code || code.length !== 6) return
+    const hit = lookupPostal(code)
+    if (hit) {
+      local.block = hit.block
+      local.street = hit.street
+    }
+    sync()
+  },
+)
 
 function sync() {
   mutable.policyholder = {
     ...quote.policyholder,
     fullName: local.fullName.trim(),
     nric: local.nric.trim().toUpperCase(),
+    dob: local.dob,
+    gender: local.gender,
+    email: local.email.trim(),
+    phone: local.phone.trim(),
+    ncd: local.ncd,
     address: {
       postalCode: local.postalCode,
       block: local.block,
@@ -54,72 +108,50 @@ function sync() {
       unit: local.unit.trim(),
       buildingName: local.buildingName.trim(),
     },
-    carDetails: {
-      registrationNumber: local.registrationNumber.trim().toUpperCase(),
-      currentInsurer: local.currentInsurer,
-      accidentClaimDate: local.accidentClaimDate,
-      ownership: local.ownership,
-    },
+    marketingChannels: [...local.marketingChannels],
   }
-}
-
-function onPostalCodeInput(v) {
-  local.postalCode = v || ''
-  if (/^\d{6}$/.test(local.postalCode)) {
-    const hit = lookupPostal(local.postalCode)
-    if (hit) {
-      local.block = hit.block === '—' ? local.block : hit.block
-      local.street = hit.street
-    }
-  }
-  sync()
 }
 
 function onNricInput(v) { local.nric = (v || '').toUpperCase(); sync() }
-function onAccidentDateInput(v) {
-  // Light MM/YYYY mask: digits + slash
-  let raw = (v || '').replace(/[^\d]/g, '').slice(0, 6)
-  if (raw.length > 2) raw = raw.slice(0, 2) + '/' + raw.slice(2)
-  local.accidentClaimDate = raw
+function onPostalInput(v) { local.postalCode = (v || '').replace(/\D/g, '').slice(0, 6); sync() }
+function pickGender(v) { local.gender = v; sync() }
+function onDobChange(v) { local.dob = v; sync() }
+function onNcdChange(v) { local.ncd = v; sync() }
+function onChannelToggle(name) {
+  const idx = local.marketingChannels.indexOf(name)
+  if (idx === -1) local.marketingChannels.push(name)
+  else local.marketingChannels.splice(idx, 1)
   sync()
 }
-function pickOwnership(v) { local.ownership = v; sync() }
+
+const maxDob = new Date()
 
 const nricValid = computed(() => validateNric(local.nric))
+const emailValid = computed(() => /^\S+@\S+\.\S+$/.test(local.email))
+const phoneValid = computed(() => /^[89]\d{7}$/.test(local.phone.replace(/\s/g, '')))
 const postalValid = computed(() => /^\d{6}$/.test(local.postalCode))
-const vrmValid = computed(() =>
-  // SG VRM rough pattern: 1–3 letters + 1–4 digits + 1 letter (e.g. SGA1234B).
-  /^[A-Z]{1,3}\d{1,4}[A-Z]$/.test(local.registrationNumber.trim().toUpperCase())
-)
-const accidentDateValid = computed(() => {
-  if (!local.accidentClaimDate) return true   // optional unless claims declared upstream
-  if (!/^(0[1-9]|1[0-2])\/\d{4}$/.test(local.accidentClaimDate)) return false
-  return true
-})
 
 const canContinue = computed(() =>
   local.fullName.trim().length > 0
   && nricValid.value
+  && Boolean(local.dob)
+  && Boolean(local.gender)
+  && emailValid.value
+  && phoneValid.value
+  && local.ncd !== null
   && postalValid.value
-  && local.block.length > 0
-  && local.street.length > 0
-  && local.unit.trim().length > 0
-  && vrmValid.value
-  && local.currentInsurer !== ''
-  && accidentDateValid.value
-  && local.ownership !== ''
+  && local.unit.trim().length > 0,
 )
 
 const nameError = computed(() => showErrors.value && local.fullName.trim().length === 0)
 const nricError = computed(() => showErrors.value && !nricValid.value)
+const dobError = computed(() => showErrors.value && !local.dob)
+const genderError = computed(() => showErrors.value && !local.gender)
+const emailError = computed(() => showErrors.value && !emailValid.value)
+const phoneError = computed(() => showErrors.value && !phoneValid.value)
+const ncdError = computed(() => showErrors.value && local.ncd === null)
 const postalError = computed(() => showErrors.value && !postalValid.value)
-const blockError = computed(() => showErrors.value && local.block.length === 0)
-const streetError = computed(() => showErrors.value && local.street.length === 0)
 const unitError = computed(() => showErrors.value && local.unit.trim().length === 0)
-const vrmError = computed(() => showErrors.value && !vrmValid.value)
-const insurerError = computed(() => showErrors.value && local.currentInsurer === '')
-const accidentDateError = computed(() => showErrors.value && !accidentDateValid.value)
-const ownershipError = computed(() => showErrors.value && local.ownership === '')
 </script>
 
 <template>
@@ -127,26 +159,26 @@ const ownershipError = computed(() => showErrors.value && local.ownership === ''
     <h1 class="bdi-section-title">Just a few more details to get you covered</h1>
 
     <!-- Your Details -->
-    <div class="group">
-      <p class="group-title">Your Details</p>
+    <div class="block">
+      <h2 class="block-title">Your Details</h2>
 
       <div class="field" :data-error="nameError ? 'true' : null">
         <InputText
           v-model="local.fullName"
           @update:model-value="sync"
-          placeholder="Full name as per NRIC"
+          placeholder="Full name (as per NRIC)"
           class="bdi-input"
           :class="{ 'is-error': nameError }"
           fluid
         />
-        <FieldError :show="nameError" message="Enter your full legal name as per NRIC." />
+        <FieldError :show="nameError" message="Enter your full name as per NRIC." />
       </div>
 
       <div class="field" :data-error="nricError ? 'true' : null">
         <InputText
           :model-value="local.nric"
           @update:model-value="onNricInput"
-          placeholder="NRIC / FIN"
+          placeholder="NRIC/FIN"
           class="bdi-input"
           :class="{ 'is-error': nricError }"
           maxlength="9"
@@ -154,16 +186,93 @@ const ownershipError = computed(() => showErrors.value && local.ownership === ''
         />
         <FieldError :show="nricError" message="Enter a valid NRIC or FIN." />
       </div>
+
+      <div class="field stack" :data-error="dobError ? 'true' : null">
+        <label class="field-sublabel" for="ph-dob">Date of birth</label>
+        <BdiDateField
+          id="ph-dob"
+          :model-value="local.dob"
+          @update:model-value="onDobChange"
+          :max-date="maxDob"
+          :invalid="dobError"
+        />
+        <FieldError :show="dobError" message="Please select your date of birth." />
+      </div>
+
+      <div class="field stack" :data-error="genderError ? 'true' : null">
+        <label class="field-sublabel">Gender</label>
+        <div class="yes-no">
+          <button
+            type="button"
+            class="yn-button"
+            :class="{ 'is-on': local.gender === 'male', 'is-error': genderError }"
+            @click="pickGender('male')"
+          >Male</button>
+          <button
+            type="button"
+            class="yn-button"
+            :class="{ 'is-on': local.gender === 'female', 'is-error': genderError }"
+            @click="pickGender('female')"
+          >Female</button>
+        </div>
+        <FieldError :show="genderError" message="Please select your gender." />
+      </div>
+
+      <div class="field" :data-error="emailError ? 'true' : null">
+        <InputText
+          v-model="local.email"
+          @update:model-value="sync"
+          placeholder="Email"
+          class="bdi-input"
+          :class="{ 'is-error': emailError }"
+          type="email"
+          fluid
+        />
+        <FieldError :show="emailError" message="Enter a valid email address." />
+      </div>
+
+      <div class="field" :data-error="phoneError ? 'true' : null">
+        <div class="phone-row">
+          <div class="country-code">+65</div>
+          <InputText
+            v-model="local.phone"
+            @update:model-value="sync"
+            placeholder="Mobile"
+            class="bdi-input phone-input"
+            :class="{ 'is-error': phoneError }"
+            inputmode="numeric"
+            maxlength="8"
+            fluid
+          />
+        </div>
+        <FieldError :show="phoneError" message="Enter a valid SG mobile (8 digits, starts with 8 or 9)." />
+      </div>
+
+      <div class="field stack" :data-error="ncdError ? 'true' : null">
+        <label class="field-sublabel">No Claim Discount (NCD) at renewal</label>
+        <Select
+          :model-value="local.ncd"
+          @update:model-value="onNcdChange"
+          :options="ncdOptions"
+          option-label="label"
+          option-value="value"
+          placeholder=" "
+          class="bdi-select"
+          :class="{ 'is-error': ncdError }"
+          fluid
+        />
+        <FieldError :show="ncdError" message="Please select your NCD at renewal." />
+      </div>
     </div>
 
     <!-- Your Address -->
-    <div class="group">
-      <p class="group-title">Your Address</p>
+    <div class="block">
+      <h2 class="block-title">Your Address</h2>
 
       <div class="field" :data-error="postalError ? 'true' : null">
         <InputText
           :model-value="local.postalCode"
-          @update:model-value="onPostalCodeInput"
+          @update:model-value="onPostalInput"
           placeholder="Postal code"
           class="bdi-input"
           :class="{ 'is-error': postalError }"
@@ -171,124 +280,76 @@ const ownershipError = computed(() => showErrors.value && local.ownership === ''
           maxlength="6"
           fluid
         />
-        <FieldError :show="postalError" message="Enter a 6-digit postal code." />
+        <p class="autofill-hint">
+          <i class="pi pi-pencil" aria-hidden="true"></i>
+          Autofill address from postal code
+        </p>
+        <FieldError :show="postalError" message="Enter a valid 6-digit Singapore postal code." />
       </div>
 
-      <div class="field" :data-error="blockError ? 'true' : null">
-        <InputText
-          v-model="local.block"
-          @update:model-value="sync"
-          placeholder="Building / block / house no."
-          class="bdi-input"
-          :class="{ 'is-error': blockError }"
-          fluid
-        />
-        <FieldError :show="blockError" message="Enter your block or house number." />
-      </div>
-
-      <div class="field" :data-error="streetError ? 'true' : null">
-        <InputText
-          v-model="local.street"
-          @update:model-value="sync"
-          placeholder="Street name"
-          class="bdi-input"
-          :class="{ 'is-error': streetError }"
-          fluid
-        />
-        <FieldError :show="streetError" message="Enter your street name." />
-      </div>
-
-      <div class="field" :data-error="unitError ? 'true' : null">
-        <InputText
-          v-model="local.unit"
-          @update:model-value="sync"
-          placeholder="Unit number (e.g. #02-15)"
-          class="bdi-input"
-          :class="{ 'is-error': unitError }"
-          fluid
-        />
-        <FieldError :show="unitError" message="Enter your unit number." />
-      </div>
-
-      <div class="field">
-        <InputText
-          v-model="local.buildingName"
-          @update:model-value="sync"
-          placeholder="Building name (if applicable)"
-          class="bdi-input"
-          fluid
-        />
-      </div>
-    </div>
-
-    <!-- Your Car Details -->
-    <div class="group">
-      <p class="group-title">Your Car Details</p>
-
-      <div class="field" :data-error="vrmError ? 'true' : null">
-        <InputText
-          v-model="local.registrationNumber"
-          @update:model-value="sync"
-          placeholder="Car registration number (e.g. SGA1234B)"
-          class="bdi-input"
-          :class="{ 'is-error': vrmError }"
-          maxlength="8"
-          fluid
-        />
-        <FieldError :show="vrmError" message="Enter a valid Singapore car plate (e.g. SGA1234B)." />
-      </div>
-
-      <div class="field" :data-error="insurerError ? 'true' : null">
-        <Select
-          :model-value="local.currentInsurer"
-          @update:model-value="(v) => { local.currentInsurer = v; sync() }"
-          :options="insurerOptions"
-          option-label="label"
-          option-value="value"
-          placeholder="Current insurer"
-          class="bdi-select"
-          :class="{ 'is-error': insurerError }"
-          fluid
-        />
-        <FieldError :show="insurerError" message="Select your current insurer or 'I don't have one'." />
-      </div>
-
-      <div class="field" :data-error="accidentDateError ? 'true' : null">
-        <p class="field-label">Date of accident / claim (if any)</p>
-        <InputText
-          :model-value="local.accidentClaimDate"
-          @update:model-value="onAccidentDateInput"
-          placeholder="MM/YYYY"
-          class="bdi-input"
-          :class="{ 'is-error': accidentDateError }"
-          inputmode="numeric"
-          maxlength="7"
-          fluid
-        />
-        <FieldError :show="accidentDateError" message="Enter the date in MM/YYYY format, or leave blank if none." />
-      </div>
-
-      <div class="field" :data-error="ownershipError ? 'true' : null">
-        <p class="field-label">Private or company owned?</p>
-        <div class="yes-no">
-          <button
-            type="button"
-            class="yn-button"
-            :class="{ 'is-selected': local.ownership === 'private', 'is-error': ownershipError }"
-            @click="pickOwnership('private')"
-          >Private</button>
-          <button
-            type="button"
-            class="yn-button"
-            :class="{ 'is-selected': local.ownership === 'company', 'is-error': ownershipError }"
-            @click="pickOwnership('company')"
-          >Company</button>
+      <div v-if="postalValid" class="address-grid">
+        <div class="field">
+          <InputText
+            v-model="local.block"
+            @update:model-value="sync"
+            placeholder="Block"
+            class="bdi-input"
+            fluid
+          />
         </div>
-        <FieldError :show="ownershipError" message="Select Private or Company." />
+        <div class="field">
+          <InputText
+            v-model="local.street"
+            @update:model-value="sync"
+            placeholder="Street"
+            class="bdi-input"
+            fluid
+          />
+        </div>
+        <div class="field" :data-error="unitError ? 'true' : null">
+          <InputText
+            v-model="local.unit"
+            @update:model-value="sync"
+            placeholder="Unit number"
+            class="bdi-input"
+            :class="{ 'is-error': unitError }"
+            fluid
+          />
+          <FieldError :show="unitError" message="Please enter your unit number." />
+        </div>
+        <div class="field">
+          <InputText
+            v-model="local.buildingName"
+            @update:model-value="sync"
+            placeholder="Building name (optional)"
+            class="bdi-input"
+            fluid
+          />
+        </div>
       </div>
     </div>
 
-    <StickyNext :disabled="!canContinue" @blocked="reveal" />
+    <!-- Marketing channels — relocated from Step 8 per KB decision -->
+    <div class="block">
+      <h2 class="block-title">Keep me updated for any special deals.</h2>
+      <div class="channels-cards">
+        <button
+          v-for="ch in channels"
+          :key="ch"
+          type="button"
+          class="channel-card"
+          :class="{ 'is-on': local.marketingChannels.includes(ch) }"
+          @click="onChannelToggle(ch)"
+        >
+          <span class="channel-box" :class="{ 'is-on': local.marketingChannels.includes(ch) }">
+            <span v-if="local.marketingChannels.includes(ch)" class="channel-tick">&check;</span>
+          </span>
+          <span class="channel-label">{{ ch }}</span>
+        </button>
+      </div>
+    </div>
+
+    <BdiQuoteFooter :disabled="!canContinue" @blocked="reveal" />
   </section>
 </template>
 
@@ -297,51 +358,67 @@ const ownershipError = computed(() => showErrors.value && local.ownership === ''
   padding-top: 24px;
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 24px;
 }
 
-.group {
+.block {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  padding: 16px;
-  background: #fff;
-  border: 1px solid var(--bdi-grey-300);
-  border-radius: var(--bdi-radius-card);
+  gap: 16px;
 }
-.group-title {
-  margin: 0 0 4px 0;
-  font-size: 12px;
+.block-title {
+  margin: 0;
+  font-family: var(--bdi-font);
+  font-size: 16px;
   font-weight: 700;
-  color: var(--bdi-grey-600);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+  color: var(--bdi-carbon);
 }
 
-.field { display: flex; flex-direction: column; gap: 8px; }
-.field-label {
+.field { display: flex; flex-direction: column; }
+.field.stack { gap: 8px; }
+
+.field-sublabel {
   margin: 0;
-  font-size: 14px;
-  font-weight: 500;
+  font-family: var(--bdi-font);
+  font-size: 16px;
+  font-weight: 600;
   color: var(--bdi-carbon);
+  line-height: 1.4;
 }
 
 .yes-no { display: flex; gap: 8px; }
 .yn-button {
-  flex: 1;
+  flex: 1 1 0;
   background: #fff;
   border: 1px solid var(--bdi-grey-300);
   border-radius: var(--bdi-radius-card);
   padding: 16px;
   min-height: 56px;
+  font-family: var(--bdi-font);
   font-size: 16px;
-  font-weight: 700;
+  font-weight: 600;
   color: var(--bdi-carbon);
   cursor: pointer;
-  font-family: var(--bdi-font);
 }
-.yn-button.is-selected { border-color: var(--bdi-green); }
+.yn-button.is-on { border-color: var(--bdi-green); }
 .yn-button.is-error { border-color: var(--bdi-red); }
+
+.phone-row {
+  display: flex;
+  align-items: stretch;
+}
+.country-code {
+  background: var(--bdi-grey-100);
+  border: 1px solid var(--bdi-grey-300);
+  border-right: 0;
+  border-radius: var(--bdi-radius-card) 0 0 var(--bdi-radius-card);
+  padding: 16px;
+  font-size: 16px;
+  font-weight: 700;
+  color: #5c5c5c;
+  display: flex;
+  align-items: center;
+}
 
 .step :deep(.bdi-input.p-inputtext),
 .step :deep(.bdi-input .p-inputtext) {
@@ -352,9 +429,83 @@ const ownershipError = computed(() => showErrors.value && local.ownership === ''
   padding: 16px;
   font-size: 16px;
   color: var(--bdi-carbon);
-  font-weight: 500;
+  font-weight: 400;
   min-height: 56px;
   width: 100%;
 }
+.step :deep(.bdi-input.is-error.p-inputtext),
+.step :deep(.bdi-input.is-error .p-inputtext) {
+  border-color: var(--bdi-red);
+}
+.phone-row :deep(.phone-input.p-inputtext) {
+  border-radius: 0 var(--bdi-radius-card) var(--bdi-radius-card) 0;
+}
 .step :deep(.bdi-select) { width: 100%; }
+.step :deep(.bdi-select.is-error) {
+  outline: 1px solid var(--bdi-red);
+  outline-offset: -1px;
+  border-radius: var(--bdi-radius-card);
+}
+
+.autofill-hint {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 8px 0 0 0;
+  font-family: var(--bdi-font);
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--bdi-carbon);
+}
+.autofill-hint .pi { font-size: 14px; }
+
+.address-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Marketing channel cards — same component pattern as Step 8 but lives
+   here per Figma. Keep both in sync if KB 98cd9339 lands either way. */
+.channels-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.channel-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  background: #fff;
+  border: 1px solid var(--bdi-grey-300);
+  border-radius: var(--bdi-radius-card);
+  padding: 16px;
+  text-align: left;
+  cursor: pointer;
+  font-family: var(--bdi-font);
+}
+.channel-card.is-on { border-color: var(--bdi-green); }
+.channel-label {
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--bdi-carbon);
+}
+.channel-box {
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 1px solid var(--bdi-carbon);
+  background: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.channel-box.is-on { background: var(--bdi-green); border-color: var(--bdi-green); }
+.channel-tick {
+  color: #fff;
+  font-size: 10px;
+  line-height: 1;
+}
 </style>
