@@ -269,7 +269,11 @@ function onBack() {
 .back-btn:hover { background: var(--bdi-grey-100); }
 .back-btn .pi { font-size: 16px; }
 
-.price { flex: 1 1 auto; min-width: 0; }
+.price {
+  flex: 1 1 auto;
+  min-width: 0;
+  text-align: center;
+}
 .price-amt {
   margin: 0;
   display: inline-flex;
