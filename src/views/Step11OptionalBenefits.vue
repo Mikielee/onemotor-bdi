@@ -16,7 +16,7 @@
  * each toggle in production.
  */
 import { computed, ref } from 'vue'
-import StickyNext from '../components/StickyNext.vue'
+import BdiQuoteFooter from '../components/BdiQuoteFooter.vue'
 import { useQuote } from '../store/quote'
 import { formatMoney } from '../utils/money'
 
@@ -155,7 +155,7 @@ const canContinue = computed(() => true)
       {{ expanded ? 'Show fewer optional benefits' : 'Show more optional benefits' }}
     </button>
 
-    <StickyNext :disabled="!canContinue" />
+    <BdiQuoteFooter :disabled="!canContinue" />
   </section>
 </template>
 
@@ -275,18 +275,21 @@ const canContinue = computed(() => true)
 }
 .learn-more:hover { text-decoration: underline; }
 
-/* Full-width outlined toggle for showing the rest of the benefits. */
+/* Full-width outlined toggle for showing the rest of the benefits.
+   Per Figma: white bg, light grey border, cyan text. Sits as an action,
+   not a content card — hence cyan to match other "Save and email quote"
+   text-link CTAs. */
 .show-more {
   width: 100%;
   background: #fff;
-  border: 1px solid var(--bdi-grey-300);
-  border-radius: var(--bdi-radius-card);
+  border: 1px solid #DADADA;
+  border-radius: 8px;
   padding: 16px;
   min-height: 56px;
   font-family: var(--bdi-font);
   font-size: 16px;
   font-weight: 600;
-  color: var(--bdi-carbon);
+  color: var(--bdi-cyan);
   cursor: pointer;
   text-align: center;
 }

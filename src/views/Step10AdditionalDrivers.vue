@@ -22,7 +22,7 @@ import { computed, reactive } from 'vue'
 import InputText from 'primevue/inputtext'
 import Select from 'primevue/select'
 import BdiDateField from '../components/BdiDateField.vue'
-import StickyNext from '../components/StickyNext.vue'
+import BdiQuoteFooter from '../components/BdiQuoteFooter.vue'
 import FieldError from '../components/FieldError.vue'
 import { useQuote } from '../store/quote'
 import { useValidation } from '../composables/useValidation'
@@ -475,7 +475,7 @@ const atCap = computed(() => local.drivers.length >= MAX_DRIVERS)
       </div>
     </template>
 
-    <StickyNext :disabled="!canContinue" @blocked="reveal" />
+    <BdiQuoteFooter :disabled="!canContinue" @blocked="reveal" />
   </section>
 </template>
 
