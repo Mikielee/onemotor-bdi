@@ -50,6 +50,9 @@ const state = reactive({
   hasAdditionalDrivers: null,
   hasOutsideDrivers: null,
   additionalDrivers: [],
+  // Authorised Driver Plan is added when hasOutsideDrivers === true.
+  // Adds +$200 to the premium and triggers the warning callout on Step 10.
+  authorisedDriverPlan: false,
   driveLess: null,
   optionalBenefits: [],
   policyholder: {
