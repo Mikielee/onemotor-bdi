@@ -13,6 +13,7 @@
 import { computed, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import InputText from 'primevue/inputtext'
+import BdiCheckIcon from '../components/BdiCheckIcon.vue'
 import { useQuote } from '../store/quote'
 import { formatMoney, formatMoneySigned } from '../utils/money'
 
@@ -269,7 +270,7 @@ const stickyUnit = computed(() =>
       </div>
 
       <div v-else class="email-sent">
-        <i class="pi pi-check-circle email-sent-check" aria-hidden="true"></i>
+        <BdiCheckIcon :size="24" />
         <span class="email-sent-text">
           Your quote has been sent to <strong>{{ emailValue }}</strong>
         </span>
@@ -307,7 +308,7 @@ const stickyUnit = computed(() =>
       <h2 class="h-sm">Promotions</h2>
 
       <div v-if="local.appliedPromo" class="promo-applied">
-        <i class="pi pi-check-circle" aria-hidden="true"></i>
+        <BdiCheckIcon :size="24" />
         <div class="promo-applied-body">
           <p class="promo-applied-code">{{ local.appliedPromo.code }}</p>
           <p class="promo-applied-benefit">{{ local.appliedPromo.benefit }}</p>
@@ -350,7 +351,7 @@ const stickyUnit = computed(() =>
             <i class="pi pi-chevron-down cov-row-toggle" aria-hidden="true"></i>
           </div>
           <div class="cov-value" :class="{ 'is-check': r.included }">
-            <i v-if="r.included" class="pi pi-check-circle cov-check" aria-hidden="true"></i>
+            <BdiCheckIcon v-if="r.included" :size="24" />
             <span v-else>{{ r.value }}</span>
           </div>
         </div>
@@ -626,7 +627,6 @@ const stickyUnit = computed(() =>
   color: var(--bdi-carbon);
   min-height: 48px;
 }
-.email-sent-check { color: var(--bdi-green); font-size: 24px; flex-shrink: 0; }
 .email-sent-text { line-height: 1.2; }
 .email-sent strong { font-weight: 700; word-break: break-all; }
 
@@ -694,7 +694,7 @@ const stickyUnit = computed(() =>
   border-radius: var(--bdi-radius-card);
   padding: 12px 14px;
 }
-.promo-applied .pi-check-circle { color: var(--bdi-green); font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+.promo-applied .bdi-check-icon { margin-top: 1px; }
 .promo-applied-body { flex: 1; display: flex; flex-direction: column; gap: 2px; }
 .promo-applied-code { margin: 0; font-size: 14px; font-weight: 900; color: var(--bdi-carbon); }
 .promo-applied-benefit { margin: 0; font-size: 12px; font-weight: 500; color: var(--bdi-carbon); }
@@ -755,8 +755,6 @@ const stickyUnit = computed(() =>
   text-align: center;
   line-height: 20px;
 }
-.cov-check { color: var(--bdi-green); font-size: 24px; }
-
 .cov-toggle {
   background: #fff;
   border: 1px solid var(--bdi-grey-200);
