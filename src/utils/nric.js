@@ -16,11 +16,17 @@ export function validateNric(nric) {
   const fgChars = ['X', 'W', 'U', 'T', 'R', 'Q', 'P', 'N', 'M', 'L', 'K']
   const mChars  = ['K', 'L', 'J', 'N', 'P', 'Q', 'R', 'T', 'U', 'W', 'X']
 
-  const idx = sum % 11
+  // S/T/F/G use the modulo result directly. M-series (FIN from Jan 2022)
+  // flips the index: idx = 10 - (sum % 11). Confirmed against valid sample
+  // M4215664N (sum=103, +3 offset=106, 106 % 11 = 7, 10 - 7 = 3, mChars[3] = 'N').
   let expected
-  if (prefix === 'S' || prefix === 'T') expected = stChars[idx]
-  else if (prefix === 'F' || prefix === 'G') expected = fgChars[idx]
-  else expected = mChars[idx]
+  if (prefix === 'S' || prefix === 'T') {
+    expected = stChars[sum % 11]
+  } else if (prefix === 'F' || prefix === 'G') {
+    expected = fgChars[sum % 11]
+  } else {
+    expected = mChars[10 - (sum % 11)]
+  }
 
   return v[8] === expected
 }
