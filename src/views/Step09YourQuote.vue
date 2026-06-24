@@ -50,7 +50,10 @@ const excessOptions = [
 
 function deltaLabel(o) {
   if (o.kind === 'default') return 'Default'
-  return `${formatMoneySigned(o.delta)}/yr`
+  // Drop "/yr" suffix — cover term flexes 7–18 months; the section helper
+  // copy already explains higher excess = lower premium. The signed amount
+  // alone keeps it term-agnostic and compliance-safe.
+  return formatMoneySigned(o.delta)
 }
 
 function sync() {
@@ -86,8 +89,12 @@ const instalmentValue = computed(() => annualTotal.value / 12)
 const heroAmount = computed(() =>
   local.paymentTerm === 'instalment' ? formatMoney(instalmentValue.value) : formatMoney(annualTotal.value)
 )
+// Cover term is 7–18 months (KB f1898394), so "per year" would be inaccurate
+// and could fall foul of MAS premium-display rules. Use "Total (incl. GST)"
+// for Single (no time claim, term is detailed in the policy itself), and
+// "per month (incl. GST)" for Instalment (factually correct billing cadence).
 const heroUnit = computed(() =>
-  local.paymentTerm === 'instalment' ? 'per month (incl. GST)' : 'per year (incl. GST)'
+  local.paymentTerm === 'instalment' ? 'per month (incl. GST)' : 'Total (incl. GST)'
 )
 
 // Coverage rows — Figma 4148-3290. Each row has a label, a `value` that
@@ -172,8 +179,10 @@ function onBuy() { router.push('/step/10') }
 const stickyAmount = computed(() => formatMoney(
   local.paymentTerm === 'instalment' ? instalmentValue.value : annualTotal.value
 ))
+// Sticky-bar unit: "/ month" for Instalment, "Total" for Single (see hero
+// unit comment for the "no per year" compliance rationale).
 const stickyUnit = computed(() =>
-  local.paymentTerm === 'instalment' ? '/ month' : '/ year'
+  local.paymentTerm === 'instalment' ? '/ month' : 'Total'
 )
 </script>
 
