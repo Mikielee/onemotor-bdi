@@ -42,6 +42,9 @@ const local = reactive({
   showForm: false,
   editingIndex: null,
   draft: blankDriver(),
+  // Flipped on first Save-driver click that fails, so per-field errors show
+  // immediately instead of silently blocking the button.
+  showDraftErrors: false,
 })
 
 function blankDriver() {
@@ -97,12 +100,14 @@ function startAdd() {
   local.draft = blankDriver()
   local.editingIndex = null
   local.showForm = true
+  local.showDraftErrors = false
 }
 
 function editDriver(i) {
   local.draft = { ...local.drivers[i] }
   local.editingIndex = i
   local.showForm = true
+  local.showDraftErrors = false
 }
 
 function removeDriver(i) {
@@ -117,6 +122,7 @@ function cancelForm() {
   local.showForm = false
   local.draft = blankDriver()
   local.editingIndex = null
+  local.showDraftErrors = false
 }
 
 function pickDraftGender(v) { local.draft.gender = v }
@@ -139,8 +145,25 @@ const canSaveDriver = computed(() => {
   )
 })
 
+// Per-field errors only surface after the user attempts Save with something
+// missing or invalid (showDraftErrors flag). Avoids yelling at the user
+// while they're still filling in earlier fields.
+const draftNameError = computed(() => local.showDraftErrors && !local.draft.name.trim())
+const draftNricError = computed(() => local.showDraftErrors && !draftNricValid.value)
+const draftDobError = computed(() => local.showDraftErrors && !local.draft.dob)
+const draftGenderError = computed(() => local.showDraftErrors && !local.draft.gender)
+const draftMaritalError = computed(() => local.showDraftErrors && !local.draft.maritalStatus)
+const draftYearsError = computed(() => local.showDraftErrors && local.draft.yearsLicensed === null)
+const draftAtFaultError = computed(() => local.showDraftErrors && local.draft.atFault === null)
+const draftNotAtFaultError = computed(() => local.showDraftErrors && local.draft.notAtFault === null)
+
 function saveDriver() {
-  if (!canSaveDriver.value) return
+  if (!canSaveDriver.value) {
+    // Reveal which field is blocking so the user isn't stuck staring at a
+    // silently disabled button.
+    local.showDraftErrors = true
+    return
+  }
   const record = {
     ...local.draft,
     name: local.draft.name.trim(),
@@ -234,8 +257,10 @@ const atCap = computed(() => local.drivers.length >= MAX_DRIVERS)
           v-model="local.draft.name"
           placeholder="Full name (as per NRIC)"
           class="bdi-input"
+          :class="{ 'is-error': draftNameError }"
           fluid
         />
+        <FieldError :show="draftNameError" message="Enter the driver's full name." />
       </div>
 
       <div class="field">
@@ -244,9 +269,11 @@ const atCap = computed(() => local.drivers.length >= MAX_DRIVERS)
           @update:model-value="(v) => (local.draft.nric = (v || '').toUpperCase())"
           placeholder="NRIC/FIN"
           class="bdi-input"
+          :class="{ 'is-error': draftNricError }"
           maxlength="9"
           fluid
         />
+        <FieldError :show="draftNricError" message="Enter a valid NRIC or FIN." />
       </div>
 
       <div class="field stack">
@@ -256,7 +283,9 @@ const atCap = computed(() => local.drivers.length >= MAX_DRIVERS)
           :model-value="local.draft.dob"
           @update:model-value="(v) => (local.draft.dob = v)"
           :max-date="new Date()"
+          :invalid="draftDobError"
         />
+        <FieldError :show="draftDobError" message="Please select date of birth." />
       </div>
 
       <div class="field stack">
@@ -265,16 +294,17 @@ const atCap = computed(() => local.drivers.length >= MAX_DRIVERS)
           <button
             type="button"
             class="yn-button"
-            :class="{ 'is-on': local.draft.gender === 'male' }"
+            :class="{ 'is-on': local.draft.gender === 'male', 'is-error': draftGenderError }"
             @click="pickDraftGender('male')"
           >Male</button>
           <button
             type="button"
             class="yn-button"
-            :class="{ 'is-on': local.draft.gender === 'female' }"
+            :class="{ 'is-on': local.draft.gender === 'female', 'is-error': draftGenderError }"
             @click="pickDraftGender('female')"
           >Female</button>
         </div>
+        <FieldError :show="draftGenderError" message="Please select gender." />
       </div>
 
       <div class="field">
@@ -285,8 +315,10 @@ const atCap = computed(() => local.drivers.length >= MAX_DRIVERS)
           option-value="value"
           placeholder="Marital status"
           class="bdi-select"
+          :class="{ 'is-error': draftMaritalError }"
           fluid
         />
+        <FieldError :show="draftMaritalError" message="Please select marital status." />
       </div>
 
       <div class="field stack">
@@ -298,8 +330,10 @@ const atCap = computed(() => local.drivers.length >= MAX_DRIVERS)
           option-value="value"
           placeholder=" "
           class="bdi-select"
+          :class="{ 'is-error': draftYearsError }"
           fluid
         />
+        <FieldError :show="draftYearsError" message="Please select years of valid driving licence." />
       </div>
 
       <div class="field stack">
@@ -312,10 +346,11 @@ const atCap = computed(() => local.drivers.length >= MAX_DRIVERS)
             :key="`af-${c}`"
             type="button"
             class="chip"
-            :class="{ 'is-on': local.draft.atFault === c }"
+            :class="{ 'is-on': local.draft.atFault === c, 'is-error': draftAtFaultError }"
             @click="pickDraftAtFault(c)"
           >{{ c }}</button>
         </div>
+        <FieldError :show="draftAtFaultError" message="Please select number of at-fault accidents/claims." />
       </div>
 
       <div class="field stack">
@@ -328,17 +363,17 @@ const atCap = computed(() => local.drivers.length >= MAX_DRIVERS)
             :key="`naf-${c}`"
             type="button"
             class="chip"
-            :class="{ 'is-on': local.draft.notAtFault === c }"
+            :class="{ 'is-on': local.draft.notAtFault === c, 'is-error': draftNotAtFaultError }"
             @click="pickDraftNotAtFault(c)"
           >{{ c }}</button>
         </div>
+        <FieldError :show="draftNotAtFaultError" message="Please select number of not-at-fault accidents/claims." />
       </div>
 
       <button
         type="button"
         class="save-driver"
         :class="{ 'is-ready': canSaveDriver }"
-        :disabled="!canSaveDriver"
         @click="saveDriver"
       >Save driver</button>
 
@@ -548,8 +583,20 @@ const atCap = computed(() => local.drivers.length >= MAX_DRIVERS)
   cursor: pointer;
 }
 .chip.is-on { border-color: var(--bdi-green); }
+.chip.is-error { border-color: var(--bdi-red); }
 
-/* Save driver: disabled = grey, enabled = green */
+.step :deep(.bdi-input.is-error.p-inputtext),
+.step :deep(.bdi-input.is-error .p-inputtext) {
+  border-color: var(--bdi-red);
+}
+.step :deep(.bdi-select.is-error) {
+  outline: 1px solid var(--bdi-red);
+  outline-offset: -1px;
+  border-radius: var(--bdi-radius-card);
+}
+
+/* Save driver: grey-look while invalid (still clickable so the user can
+   trigger error reveal), green when all fields are valid. */
 .save-driver {
   background: #E4E4E4;
   color: #858585;
@@ -560,13 +607,12 @@ const atCap = computed(() => local.drivers.length >= MAX_DRIVERS)
   font-family: var(--bdi-font);
   font-size: 16px;
   font-weight: 600;
-  cursor: not-allowed;
+  cursor: pointer;
 }
 .save-driver.is-ready {
   background: var(--bdi-green);
   color: #fff;
   border-color: var(--bdi-green);
-  cursor: pointer;
 }
 
 .cancel-form {
