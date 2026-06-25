@@ -93,8 +93,13 @@ const canPay = computed(() => {
 
 function onPay() {
   if (!canPay.value) return
-  if (local.paymentMethod === 'paynow') router.push('/step/16')
-  else router.push('/step/17')
+  if (local.paymentMethod === 'paynow') {
+    router.push('/step/16')
+  } else {
+    // Credit card path (Single or Instalment) — hand off to the gateway
+    // mock, which routes to /step/17 on success.
+    router.push('/payment/gateway')
+  }
 }
 </script>
 

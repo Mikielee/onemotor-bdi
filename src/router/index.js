@@ -92,6 +92,26 @@ const routes = [
     component: () => import('../views/Step15Payment.vue'),
     meta: { step: 15, group: 3, omp: 'OMP-654', title: 'Payment Options' },
   },
+  {
+    path: '/step/16',
+    name: 'step-16-paynow-qr',
+    component: () => import('../views/Step16PayNowQR.vue'),
+    meta: { step: 16, group: 3, omp: 'OMP-655', title: 'PayNow QR' },
+  },
+  {
+    path: '/step/17',
+    name: 'step-17-confirmation',
+    component: () => import('../views/Step17Confirmation.vue'),
+    meta: { step: 17, group: 3, omp: 'OMP-656', title: 'Confirmation' },
+  },
+  {
+    // Mock card-payment gateway. Sits outside the step counter — in a
+    // real flow this is the external Stripe/Adyen/2C2P hosted page.
+    path: '/payment/gateway',
+    name: 'payment-gateway',
+    component: () => import('../views/PaymentGateway.vue'),
+    meta: { title: 'Secure Payment' },
+  },
   { path: '/:pathMatch(.*)*', redirect: '/step/1' },
 ]
 
