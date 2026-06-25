@@ -1,20 +1,16 @@
 <script setup>
 /**
- * Step 14 — Policy Summary. NEW page (no Figma yet — designed in-prototype
- * applying /impeccable product-register laws and the BD design system).
+ * Step 14 — Review your custom cover (Policy Summary).
+ * Rebuilt to match the DA-side layout (cards grouped by topic, each with
+ * an edit affordance, driver rows, plan cards with green-check status,
+ * selected-benefits list) but in BD styling — Museo Sans, BD red brand,
+ * BD green for status, no yellow.
  *
- * Two-tier visual hierarchy:
- *   1. Elevated hero card with the three facts that define the policy:
- *      cover type, vehicle, policy period. Subtle green "Quote secured"
- *      badge above the title; quote ID below a hairline rule. One card
- *      total — avoids the wall-of-identical-cards anti-pattern.
- *   2. Flat detail sections, separated by 1px hairlines (no nested cards).
- *      Each section is a flowing sentence rather than a label/value stack,
- *      with a small cyan "Edit" link at the right that routes back to the
- *      originating step.
- *
- * A confirmation checkbox gates the sticky footer's "Proceed to payment"
- * button. The footer is BdiQuoteFooter so the running price stays visible.
+ * Adds the three disclosure gates that need to be ticked before payment:
+ *   1. Terms & Conditions
+ *   2. Duty of Disclosure
+ *   3. Underwriting Declaration
+ * All three required → BdiQuoteFooter "Proceed to payment" enables.
  */
 import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
@@ -25,21 +21,23 @@ import { useQuote } from '../store/quote'
 const { quote } = useQuote()
 const router = useRouter()
 
-const confirmed = ref(false)
+const acceptedTerms = ref(false)
+const acceptedDuty = ref(false)
+const acceptedUnderwriting = ref(false)
+
+const allDisclosuresAccepted = computed(
+  () => acceptedTerms.value && acceptedDuty.value && acceptedUnderwriting.value,
+)
 
 function editTo(step) {
   router.push(`/step/${step}`)
 }
 
 function formatDate(value) {
-  if (!value) return ''
+  if (!value) return '—'
   const d = new Date(value)
-  if (Number.isNaN(d.getTime())) return ''
-  return d.toLocaleDateString('en-GB', {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-  })
+  if (Number.isNaN(d.getTime())) return '—'
+  return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
 }
 
 function capitalise(s) {
@@ -58,67 +56,71 @@ const coverTypeLabel = computed(() => ({
   'comprehensive': 'Comprehensive',
 })[quote.coverType] || '—')
 
-const vehicleHeadline = computed(() => {
-  const parts = [quote.carMake, quote.carModel, quote.carYear].filter(Boolean)
-  return parts.length ? parts.join(' · ') : 'Vehicle to be confirmed'
-})
+const quoteId = 'P11254149R00'
 
-const periodLabel = computed(() => {
+const policyDuration = computed(() => {
   const start = quote.coverStartDate
   const end = quote.coverEndDate
-  if (!start) return 'Cover dates to be confirmed'
-  return `${formatDate(start)} to ${formatDate(end)}`
+  if (!start || !end) return 'Cover dates to be confirmed'
+  return `${formatDate(start)} – ${formatDate(end)}`
 })
 
-const mainDriverSentence = computed(() => {
-  const md = quote.mainDriver || {}
-  const dh = quote.drivingHistory || {}
-  const parts = []
-  if (md.gender) parts.push(md.gender === 'male' ? 'Male' : 'Female')
-  if (md.dob) parts.push(`born ${formatDate(md.dob)}`)
-  if (md.maritalStatus) parts.push(capitalise(md.maritalStatus))
-  if (dh.yearsLicensed != null) {
-    parts.push(`licensed for ${dh.yearsLicensed} year${dh.yearsLicensed === 1 ? '' : 's'}`)
-  }
-  if (dh.ncd != null) parts.push(`${dh.ncd}% NCD at renewal`)
-  if (dh.certificateOfMerit === true) parts.push('Certificate of Merit')
-  return parts.length ? parts.join(' · ') : 'Main driver details not yet captured'
-})
+const promoApplied = computed(() => quote.quoteSelection?.appliedPromo || null)
 
-const additionalDrivers = computed(() => {
-  const list = quote.additionalDrivers || []
-  return list.map((d) => ({
+// Car-details section. BD-only — no odometer per KB #7. Mileage = annual
+// distance band from Step 5.
+const usageLabel = computed(() => {
+  const u = quote.carUsage?.usage
+  if (u === 'private-only') return 'Private only'
+  if (u === 'private-business') return 'Private and business'
+  return '—'
+})
+const offPeakLabel = computed(() => {
+  const v = quote.carUsage?.offPeak
+  if (v === true) return 'Yes'
+  if (v === false) return 'No'
+  return '—'
+})
+const mileageLabel = computed(() => ({
+  'under-8000': 'Less than 8,000 km',
+  '8000-12000': '8,000 – 12,000 km',
+  '12001-18000': '12,001 – 18,000 km',
+  'over-18000': 'Over 18,000 km',
+})[quote.annualDistance] || '—')
+
+// Person rows — when main driver IS policyholder, show a combined row;
+// otherwise show them separately.
+const mainDriverIsPolicyholder = computed(
+  () => quote.mainDriver?.isPolicyholder === true,
+)
+
+const policyholderName = computed(
+  () => quote.policyholder?.fullName || 'Policyholder',
+)
+const policyholderDob = computed(
+  () => formatDate(quote.policyholder?.dob),
+)
+const mainDriverName = computed(
+  () => mainDriverIsPolicyholder.value
+    ? policyholderName.value
+    : quote.mainDriver?.name || 'Main driver',
+)
+const mainDriverDob = computed(
+  () => formatDate(mainDriverIsPolicyholder.value
+    ? quote.policyholder?.dob
+    : quote.mainDriver?.dob),
+)
+
+const namedDrivers = computed(() =>
+  (quote.additionalDrivers || []).map((d) => ({
     name: d.name || 'Unnamed driver',
-    sub: [
-      d.gender === 'male' ? 'Male' : d.gender === 'female' ? 'Female' : '',
-      d.dob ? `born ${formatDate(d.dob)}` : '',
-    ].filter(Boolean).join(' · '),
-  }))
-})
+    dob: formatDate(d.dob),
+  })),
+)
 
-const authorisedDriverPlanLabel = computed(() => {
-  if (quote.hasOutsideDrivers === true) return 'Included (+$200.00)'
-  if (quote.hasOutsideDrivers === false) return 'Not included'
-  return 'Not yet chosen'
-})
-
-const carSentence = computed(() => {
-  const cd = quote.policyholder?.carDetails || {}
-  const parts = []
-  if (cd.registrationNumber) parts.push(`VRM ${cd.registrationNumber}`)
-  else if (cd.chassisNumber) parts.push(`Chassis ${cd.chassisNumber}`)
-  if (cd.currentInsurer && cd.currentInsurer !== 'None') {
-    parts.push(`Currently insured with ${cd.currentInsurer}`)
-  } else if (cd.currentInsurer === 'None') {
-    parts.push('No current insurer')
-  }
-  if (cd.financing === true && cd.financialInstitution) {
-    parts.push(`Financed by ${cd.financialInstitution}`)
-  } else if (cd.financing === false) {
-    parts.push('Not financed')
-  }
-  return parts.length ? parts.join(' · ') : 'Vehicle details not yet captured'
-})
+// Plan cards — only render the ones the customer actually has.
+const hasHouseholdPlan = computed(() => namedDrivers.value.length > 0)
+const hasAuthorisedPlan = computed(() => quote.authorisedDriverPlan === true)
 
 const BENEFIT_LABELS = {
   'ncd-protector': 'NCD Protector',
@@ -126,168 +128,254 @@ const BENEFIT_LABELS = {
   'any-workshop': 'Any Workshop',
   'new-for-old': 'New for Old Replacement Car',
   'medical-expenses': 'Medical Expenses',
-  'overseas-emergency': 'Overseas Emergency / Repatriation',
+  'overseas-emergency': 'Overseas Emergency Allowance / Repatriation',
   'personal-accident': 'Personal Accident',
-  'transport-allowance': 'Transport Allowance',
-  'windscreen-cover': 'Windscreen Cover',
+  'transport-allowance': 'Transport Allowance / Loss of Use',
+  'windscreen-cover': 'Windscreen Cover Add-on',
   'ev-addon': 'EV Add-on Pack',
 }
-const benefitsSentence = computed(() => {
-  const list = (quote.optionalBenefits || []).map((id) => BENEFIT_LABELS[id] || id)
-  return list.length ? list.join(' · ') : 'Standard cover only — no add-ons'
-})
+const selectedBenefits = computed(() =>
+  (quote.optionalBenefits || []).map((id) => BENEFIT_LABELS[id] || id),
+)
 
-const excessLabel = computed(() => {
-  const e = quote.quoteSelection?.excess ?? 600
-  return e === 600 ? '$600 (default)' : `$${e.toLocaleString()}`
-})
-
-const policyholderSentence = computed(() => {
-  const ph = quote.policyholder || {}
-  const a = ph.address || {}
-  const parts = []
-  if (ph.fullName) parts.push(ph.fullName)
-  if (ph.nric) parts.push(`NRIC ${maskNric(ph.nric)}`)
-  const addressLine = [a.block, a.street, a.unit ? `#${a.unit}` : ''].filter(Boolean).join(' ')
-  if (addressLine) parts.push(addressLine)
-  if (ph.email) parts.push(ph.email)
-  if (ph.phone) parts.push(`+65 ${ph.phone}`)
-  return parts.length ? parts.join(' · ') : 'Policyholder details not yet captured'
-})
-
-const paymentTermLabel = computed(() => {
-  const term = quote.quoteSelection?.paymentTerm ?? 'single'
-  return term === 'single'
-    ? 'Single payment (3% discount applied)'
-    : 'Instalment (monthly)'
-})
-
-// Sticky footer is intercepted so we can navigate to /step/15 instead of
-// the default /step/15 — same route, but explicit so future routing logic
-// (e.g. PayNow direct path) is easy to slot in.
 function onProceed() {
+  if (!allDisclosuresAccepted.value) return
   router.push('/step/15')
 }
 </script>
 
 <template>
   <section class="step">
-    <p class="page-eyebrow">Step 14 of 17</p>
-    <h1 class="page-title">Almost there. One last look.</h1>
+    <h1 class="page-title">Review your custom cover</h1>
     <p class="page-lede">
-      Take a moment to check the details below. Tap <em>Edit</em> on any
-      section if something needs to change.
+      Everything looks great. Take a moment to verify your details before
+      we finalise your policy.
     </p>
 
-    <!-- Elevated hero card -->
-    <article class="hero">
-      <div class="hero-badge">
-        <BdiCheckIcon :size="18" />
-        <span>Quote secured</span>
-      </div>
-      <h2 class="hero-cover">{{ coverTypeLabel }} cover</h2>
-      <p class="hero-line">{{ vehicleHeadline }}</p>
-      <p class="hero-line">{{ periodLabel }}</p>
-      <hr class="hero-rule" />
-      <p class="hero-quote-id">Quote ID · P11254149R00</p>
+    <!-- Policy details -->
+    <article class="card">
+      <header class="card-head">
+        <h2>Policy details</h2>
+        <button type="button" class="edit-btn" aria-label="Edit policy details" @click="editTo(1)">
+          <i class="pi pi-pencil" aria-hidden="true"></i>
+        </button>
+      </header>
+      <dl class="card-rows">
+        <div class="row">
+          <dt>Quote ID</dt>
+          <dd>{{ quoteId }}</dd>
+        </div>
+        <div class="row">
+          <dt>Policy type</dt>
+          <dd>{{ coverTypeLabel }} cover</dd>
+        </div>
+        <div class="row">
+          <dt>Policy duration</dt>
+          <dd>{{ policyDuration }}</dd>
+        </div>
+        <div v-if="promoApplied" class="row">
+          <dt>Promo</dt>
+          <dd>{{ promoApplied.code }} — {{ promoApplied.benefit }}</dd>
+        </div>
+      </dl>
     </article>
 
-    <!-- Detail sections, flat with hairlines between -->
-    <div class="details">
-
-      <section class="row">
-        <div class="row-head">
-          <h3>Main driver</h3>
-          <button type="button" class="edit-link" @click="editTo(6)">Edit</button>
+    <!-- Car details -->
+    <article class="card">
+      <header class="card-head">
+        <h2>Car details</h2>
+        <button type="button" class="edit-btn" aria-label="Edit car details" @click="editTo(13)">
+          <i class="pi pi-pencil" aria-hidden="true"></i>
+        </button>
+      </header>
+      <dl class="card-rows">
+        <div class="row">
+          <dt>Car brand</dt>
+          <dd>{{ quote.carMake || '—' }}</dd>
         </div>
-        <p class="row-body">{{ mainDriverSentence }}</p>
-      </section>
-
-      <section class="row">
-        <div class="row-head">
-          <h3>Additional drivers</h3>
-          <button type="button" class="edit-link" @click="editTo(10)">Edit</button>
+        <div class="row">
+          <dt>Car model</dt>
+          <dd>{{ quote.carModel || '—' }}</dd>
         </div>
-        <p v-if="additionalDrivers.length === 0" class="row-body row-body-muted">
-          Just you — no household drivers added.
+        <div class="row">
+          <dt>Year of registration</dt>
+          <dd>{{ quote.carYear || '—' }}</dd>
+        </div>
+        <div class="row">
+          <dt>Vehicle registration number</dt>
+          <dd>{{ quote.policyholder?.carDetails?.registrationNumber
+            || quote.policyholder?.carDetails?.chassisNumber
+            || '—' }}</dd>
+        </div>
+        <div class="row">
+          <dt>Car usage</dt>
+          <dd>{{ usageLabel }}</dd>
+        </div>
+        <div class="row">
+          <dt>Off-peak car</dt>
+          <dd>{{ offPeakLabel }}</dd>
+        </div>
+        <div class="row">
+          <dt>Annual mileage</dt>
+          <dd>{{ mileageLabel }}</dd>
+        </div>
+      </dl>
+    </article>
+
+    <!-- Drivers -->
+    <template v-if="mainDriverIsPolicyholder">
+      <h3 class="block-heading">Policyholder &amp; Main driver</h3>
+      <article class="person-card">
+        <div class="person-info">
+          <p class="person-name">{{ policyholderName }}</p>
+          <p class="person-meta">{{ policyholderDob }}</p>
+        </div>
+        <button type="button" class="edit-btn" aria-label="Edit policyholder" @click="editTo(12)">
+          <i class="pi pi-pencil" aria-hidden="true"></i>
+        </button>
+      </article>
+    </template>
+    <template v-else>
+      <h3 class="block-heading">Policyholder</h3>
+      <article class="person-card">
+        <div class="person-info">
+          <p class="person-name">{{ policyholderName }}</p>
+          <p class="person-meta">{{ policyholderDob }}</p>
+        </div>
+        <button type="button" class="edit-btn" aria-label="Edit policyholder" @click="editTo(12)">
+          <i class="pi pi-pencil" aria-hidden="true"></i>
+        </button>
+      </article>
+
+      <h3 class="block-heading">Main driver</h3>
+      <article class="person-card">
+        <div class="person-info">
+          <p class="person-name">{{ mainDriverName }}</p>
+          <p class="person-meta">{{ mainDriverDob }}</p>
+        </div>
+        <button type="button" class="edit-btn" aria-label="Edit main driver" @click="editTo(6)">
+          <i class="pi pi-pencil" aria-hidden="true"></i>
+        </button>
+      </article>
+    </template>
+
+    <template v-if="namedDrivers.length > 0">
+      <h3 class="block-heading">Named drivers</h3>
+      <article
+        v-for="(d, i) in namedDrivers"
+        :key="i"
+        class="person-card"
+      >
+        <div class="person-info">
+          <p class="person-name">{{ d.name }}</p>
+          <p class="person-meta">{{ d.dob }}</p>
+        </div>
+        <button type="button" class="edit-btn" aria-label="Edit named driver" @click="editTo(10)">
+          <i class="pi pi-pencil" aria-hidden="true"></i>
+        </button>
+      </article>
+    </template>
+
+    <!-- Plan cards. Only render the ones the customer actually has. -->
+    <article v-if="hasHouseholdPlan" class="plan-card">
+      <BdiCheckIcon :size="20" />
+      <div class="plan-body">
+        <p class="plan-title">Household driver plan</p>
+        <p class="plan-text">
+          The named household drivers listed above are covered to drive
+          this car under your policy.
         </p>
-        <div v-else class="row-body driver-list">
-          <p v-for="(d, i) in additionalDrivers" :key="i">
-            <strong>{{ d.name }}</strong>
-            <span v-if="d.sub"> · {{ d.sub }}</span>
-          </p>
+      </div>
+    </article>
+
+    <article v-if="hasAuthorisedPlan" class="plan-card">
+      <BdiCheckIcon :size="20" />
+      <div class="plan-body">
+        <p class="plan-title">Authorised Driver Plan</p>
+        <p class="plan-text">
+          Any licensed driver you authorise to use this car is covered,
+          subject to the policy exclusions noted at Step 10.
+        </p>
+      </div>
+    </article>
+
+    <!-- Selected benefits -->
+    <template v-if="selectedBenefits.length > 0">
+      <h3 class="block-heading">Selected benefits</h3>
+      <article class="card benefit-list">
+        <div v-for="(b, i) in selectedBenefits" :key="i" class="benefit-row">
+          <BdiCheckIcon :size="18" />
+          <span class="benefit-name">{{ b }}</span>
         </div>
-      </section>
+      </article>
+    </template>
 
-      <section class="row">
-        <div class="row-head">
-          <h3>Authorised Driver Plan</h3>
-          <button type="button" class="edit-link" @click="editTo(10)">Edit</button>
-        </div>
-        <p class="row-body">{{ authorisedDriverPlanLabel }}</p>
-      </section>
+    <!-- Disclosure / consent gates -->
+    <section class="disclosures">
+      <h3 class="block-heading">Before we finalise</h3>
+      <p class="disclosure-intro">
+        Please review and accept the following before proceeding to payment.
+      </p>
 
-      <section class="row">
-        <div class="row-head">
-          <h3>Your car</h3>
-          <button type="button" class="edit-link" @click="editTo(13)">Edit</button>
-        </div>
-        <p class="row-body">{{ carSentence }}</p>
-      </section>
+      <button
+        type="button"
+        class="disc-row"
+        :class="{ 'is-on': acceptedTerms }"
+        :aria-pressed="acceptedTerms"
+        @click="acceptedTerms = !acceptedTerms"
+      >
+        <span class="disc-box" :class="{ 'is-on': acceptedTerms }">
+          <BdiCheckIcon v-if="acceptedTerms" :size="18" />
+        </span>
+        <span class="disc-text">
+          I have read and agree to the
+          <a href="#" class="doc-link" @click.stop>Terms &amp; Conditions</a>
+          and
+          <a href="#" class="doc-link" @click.stop>Policy Wording</a>.
+        </span>
+      </button>
 
-      <section class="row">
-        <div class="row-head">
-          <h3>Optional benefits</h3>
-          <button type="button" class="edit-link" @click="editTo(11)">Edit</button>
-        </div>
-        <p class="row-body">{{ benefitsSentence }}</p>
-      </section>
+      <button
+        type="button"
+        class="disc-row"
+        :class="{ 'is-on': acceptedDuty }"
+        :aria-pressed="acceptedDuty"
+        @click="acceptedDuty = !acceptedDuty"
+      >
+        <span class="disc-box" :class="{ 'is-on': acceptedDuty }">
+          <BdiCheckIcon v-if="acceptedDuty" :size="18" />
+        </span>
+        <span class="disc-text">
+          <strong>Duty of disclosure.</strong>
+          I confirm the information I have provided is true, complete and
+          accurate. I understand that if any of it is incorrect or
+          incomplete, my policy may be cancelled or a claim may be
+          declined.
+        </span>
+      </button>
 
-      <section class="row">
-        <div class="row-head">
-          <h3>Excess</h3>
-          <button type="button" class="edit-link" @click="editTo(9)">Edit</button>
-        </div>
-        <p class="row-body">{{ excessLabel }}</p>
-      </section>
-
-      <section class="row">
-        <div class="row-head">
-          <h3>Policyholder</h3>
-          <button type="button" class="edit-link" @click="editTo(12)">Edit</button>
-        </div>
-        <p class="row-body">{{ policyholderSentence }}</p>
-      </section>
-
-      <section class="row">
-        <div class="row-head">
-          <h3>Payment terms</h3>
-          <button type="button" class="edit-link" @click="editTo(9)">Edit</button>
-        </div>
-        <p class="row-body">{{ paymentTermLabel }}</p>
-      </section>
-
-    </div>
-
-    <!-- Confirmation gate -->
-    <button
-      type="button"
-      class="confirm-row"
-      :class="{ 'is-on': confirmed }"
-      :aria-pressed="confirmed"
-      @click="confirmed = !confirmed"
-    >
-      <span class="confirm-box" :class="{ 'is-on': confirmed }">
-        <BdiCheckIcon v-if="confirmed" :size="20" />
-      </span>
-      <span class="confirm-text">
-        I confirm the details above are correct and I accept the
-        <a href="#" class="policy-link" @click.stop>policy wording</a>.
-      </span>
-    </button>
+      <button
+        type="button"
+        class="disc-row"
+        :class="{ 'is-on': acceptedUnderwriting }"
+        :aria-pressed="acceptedUnderwriting"
+        @click="acceptedUnderwriting = !acceptedUnderwriting"
+      >
+        <span class="disc-box" :class="{ 'is-on': acceptedUnderwriting }">
+          <BdiCheckIcon v-if="acceptedUnderwriting" :size="18" />
+        </span>
+        <span class="disc-text">
+          <strong>Underwriting declaration.</strong>
+          Neither I nor any driver to be insured has had insurance
+          cancelled, declined or had special terms imposed, nor any
+          undisclosed convictions, undisclosed at-fault claims, or
+          driving licence currently disqualified, suspended, or endorsed.
+        </span>
+      </button>
+    </section>
 
     <BdiQuoteFooter
-      :disabled="!confirmed"
+      :disabled="!allDisclosuresAccepted"
       :intercept-next="true"
       next-label="Proceed to payment"
       @next="onProceed"
@@ -300,179 +388,212 @@ function onProceed() {
   padding-top: 24px;
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 16px;
 }
 
-/* Page header — eyebrow + h1 + lede. Sets a calmer top hierarchy than the
-   chunky section titles other steps use. */
-.page-eyebrow {
-  margin: 0;
-  font-family: var(--bdi-font);
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: var(--bdi-grey-600);
-}
 .page-title {
   margin: 0;
   font-family: var(--bdi-font);
-  font-size: 28px;
-  font-weight: 900;
-  line-height: 1.15;
+  font-size: 24px;
+  font-weight: 700;
   color: var(--bdi-carbon);
+  line-height: 1.2;
 }
 .page-lede {
-  margin: 0;
+  margin: 0 0 8px 0;
   font-family: var(--bdi-font);
   font-size: 16px;
-  font-weight: 400;
-  color: var(--bdi-grey-600);
+  font-weight: 500;
+  color: var(--bdi-carbon);
   line-height: 1.5;
   max-width: 60ch;
 }
-.page-lede em {
-  font-style: normal;
+
+.block-heading {
+  margin: 8px 0 0 0;
+  font-family: var(--bdi-font);
+  font-size: 18px;
   font-weight: 700;
-  color: var(--bdi-cyan);
+  color: var(--bdi-carbon);
+  line-height: 1.25;
 }
 
-/* Hero card — the only elevated surface on this page. Restrained colour:
-   white card, grey-200 border, subtle shadow, green only on the badge. */
-.hero {
+/* White card with light grey border. The DA mock used a 4px coloured
+   left stripe; replaced with a uniform 1px border to keep the visual
+   uniform without the side-stripe affordance. */
+.card {
   background: #fff;
-  border: 1px solid var(--bdi-grey-200);
+  border: 1px solid #CCCCCC;
   border-radius: 8px;
-  padding: 24px;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04), 0 4px 12px rgba(0, 0, 0, 0.06);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  position: relative;
+}
+
+.card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.card-head h2 {
+  margin: 0;
+  font-family: var(--bdi-font);
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--bdi-carbon);
+}
+
+/* Edit affordance — small circular icon button. */
+.edit-btn {
+  flex: 0 0 28px;
+  width: 28px;
+  height: 28px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--bdi-grey-100);
+  color: var(--bdi-carbon);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.edit-btn:hover { background: var(--bdi-grey-200); }
+.edit-btn .pi { font-size: 12px; }
+
+.card-rows {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.row {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.row dt {
+  font-family: var(--bdi-font);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--bdi-grey-600);
+}
+.row dd {
+  margin: 0;
+  font-family: var(--bdi-font);
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--bdi-carbon);
+  line-height: 1.3;
+}
+
+/* Person rows — flat white card with name + dob + edit affordance. */
+.person-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #fff;
+  border: 1px solid #CCCCCC;
+  border-radius: 8px;
+  padding: 16px 20px;
+}
+.person-info { flex: 1 1 0; display: flex; flex-direction: column; gap: 2px; }
+.person-name {
+  margin: 0;
+  font-family: var(--bdi-font);
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--bdi-carbon);
+  line-height: 1.3;
+}
+.person-meta {
+  margin: 0;
+  font-family: var(--bdi-font);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--bdi-grey-600);
+  line-height: 1.3;
+}
+
+/* Plan card — green check on the left, bold title, description below. */
+.plan-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  background: #fff;
+  border: 1px solid #CCCCCC;
+  border-radius: 8px;
+  padding: 16px 20px;
+}
+.plan-body { flex: 1 1 0; display: flex; flex-direction: column; gap: 4px; }
+.plan-title {
+  margin: 0;
+  font-family: var(--bdi-font);
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--bdi-carbon);
+}
+.plan-text {
+  margin: 0;
+  font-family: var(--bdi-font);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--bdi-carbon);
+  line-height: 1.45;
+}
+
+/* Selected benefits — uses .card shell. */
+.benefit-list {
+  gap: 12px;
+}
+.benefit-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.benefit-name {
+  font-family: var(--bdi-font);
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--bdi-carbon);
+  line-height: 1.3;
+}
+
+/* Disclosures — three tappable rows, each a checkbox+text. All required. */
+.disclosures {
   display: flex;
   flex-direction: column;
   gap: 8px;
+  margin-top: 8px;
 }
-.hero-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-family: var(--bdi-font);
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--bdi-green);
-  letter-spacing: 0.02em;
-  text-transform: uppercase;
-  margin-bottom: 8px;
-}
-.hero-cover {
-  margin: 0;
-  font-family: var(--bdi-font);
-  font-size: 28px;
-  font-weight: 900;
-  line-height: 1.15;
-  color: var(--bdi-carbon);
-}
-.hero-line {
-  margin: 0;
-  font-family: var(--bdi-font);
-  font-size: 16px;
-  font-weight: 500;
-  color: var(--bdi-grey-600);
-  line-height: 1.45;
-}
-.hero-rule {
-  border: 0;
-  border-top: 1px solid var(--bdi-grey-200);
-  margin: 12px 0 0 0;
-}
-.hero-quote-id {
-  margin: 0;
-  font-family: var(--bdi-font);
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--bdi-grey-600);
-  letter-spacing: 0.02em;
-}
-
-/* Detail sections — flat. No nested cards. Hairlines between rows. */
-.details {
-  display: flex;
-  flex-direction: column;
-}
-.row {
-  padding: 16px 0;
-  border-bottom: 1px solid var(--bdi-grey-200);
-}
-.row:first-child { padding-top: 0; }
-.row:last-child { border-bottom: 0; padding-bottom: 0; }
-
-.row-head {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 6px;
-}
-.row-head h3 {
-  margin: 0;
+.disclosure-intro {
+  margin: 0 0 4px 0;
   font-family: var(--bdi-font);
   font-size: 14px;
-  font-weight: 700;
-  color: var(--bdi-carbon);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
-.edit-link {
-  background: transparent;
-  border: 0;
-  padding: 4px 6px;
-  margin: -4px -6px;
-  font-family: var(--bdi-font);
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--bdi-cyan);
-  cursor: pointer;
-}
-.edit-link:hover {
-  text-decoration: underline;
-}
-.row-body {
-  margin: 0;
-  font-family: var(--bdi-font);
-  font-size: 16px;
   font-weight: 500;
-  color: var(--bdi-carbon);
-  line-height: 1.5;
-}
-.row-body-muted {
   color: var(--bdi-grey-600);
-  font-weight: 400;
+  line-height: 1.4;
 }
-.driver-list {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-.driver-list p { margin: 0; }
-.driver-list strong { font-weight: 700; }
-
-/* Confirmation gate — large tappable area. Acts as both a UI affordance
-   and the explicit consent checkpoint before payment. */
-.confirm-row {
+.disc-row {
   display: flex;
   align-items: flex-start;
   gap: 12px;
   width: 100%;
   background: #fff;
-  border: 1px solid var(--bdi-grey-200);
+  border: 1px solid #CCCCCC;
   border-radius: 8px;
-  padding: 16px;
+  padding: 14px 16px;
   cursor: pointer;
   text-align: left;
   font-family: var(--bdi-font);
 }
-.confirm-row.is-on { border-color: var(--bdi-green); }
-.confirm-box {
-  flex: 0 0 24px;
-  width: 24px;
-  height: 24px;
+.disc-row.is-on { border-color: var(--bdi-green); }
+.disc-box {
+  flex: 0 0 22px;
+  width: 22px;
+  height: 22px;
   border-radius: 4px;
   border: 2px solid var(--bdi-grey-600);
   background: #fff;
@@ -481,15 +602,16 @@ function onProceed() {
   justify-content: center;
   margin-top: 1px;
 }
-.confirm-box.is-on { border-color: var(--bdi-green); }
-.confirm-text {
+.disc-box.is-on { border-color: var(--bdi-green); }
+.disc-text {
   flex: 1 1 0;
   font-size: 14px;
   font-weight: 500;
   color: var(--bdi-carbon);
-  line-height: 1.45;
+  line-height: 1.5;
 }
-.policy-link {
+.disc-text strong { font-weight: 700; }
+.doc-link {
   color: var(--bdi-cyan);
   text-decoration: underline;
   font-weight: 600;
