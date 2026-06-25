@@ -57,6 +57,12 @@ const routes = [
     meta: { step: 9, group: 2, omp: 'OMP-305', title: 'Your Quote' },
   },
   {
+    path: '/step/10.1',
+    name: 'step-10-1-main-driver-confirm',
+    component: () => import('../views/Step10_1MainDriverConfirm.vue'),
+    meta: { step: 10, group: 2, omp: 'OMP-NEW', title: 'Main Driver Confirmation' },
+  },
+  {
     path: '/step/10',
     name: 'step-10-additional-drivers',
     component: () => import('../views/Step10AdditionalDrivers.vue'),

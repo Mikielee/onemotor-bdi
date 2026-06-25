@@ -175,7 +175,7 @@ const carLine = computed(() => {
 
 // Sticky footer.
 function onBack() { router.back() }
-function onBuy() { router.push('/step/10') }
+function onBuy() { router.push('/step/10.1') }
 
 // Mini-price on the sticky bar: green amount + " / year" inline, then
 // "(incl. GST)" line below.
