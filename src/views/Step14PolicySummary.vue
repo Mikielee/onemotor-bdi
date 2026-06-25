@@ -377,7 +377,7 @@ function onProceed() {
     <BdiQuoteFooter
       :disabled="!allDisclosuresAccepted"
       :intercept-next="true"
-      next-label="Proceed to payment"
+      next-label="Payment"
       @next="onProceed"
     />
   </section>
