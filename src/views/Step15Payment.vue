@@ -23,6 +23,14 @@ import { useRouter } from 'vue-router'
 import BdiQuoteFooter from '../components/BdiQuoteFooter.vue'
 import { useQuote } from '../store/quote'
 
+// Licensed brand logo assets supplied via the project's 04_Design folder.
+// Vite hashes and fingerprints these at build time so deploys stay cache-busted.
+import creditCardsLogo from '../assets/payment/credit-cards.png'
+import paynowLogo from '../assets/payment/paynow.png'
+import uobLogo from '../assets/payment/uob.png'
+import dbsLogo from '../assets/payment/dbs.png'
+import ocbcLogo from '../assets/payment/ocbc.png'
+
 const { quote, mutable } = useQuote()
 const router = useRouter()
 
@@ -72,9 +80,9 @@ const isInstalment = computed(() => local.paymentTerm === 'instalment')
 // Bank options for instalment plans — covers ~95% of SG car instalment
 // volume per the OMP-654 brief.
 const banks = [
-  { value: 'uob', label: 'UOB' },
-  { value: 'dbs', label: 'DBS' },
-  { value: 'ocbc', label: 'OCBC' },
+  { value: 'uob', label: 'UOB', logo: uobLogo },
+  { value: 'dbs', label: 'DBS', logo: dbsLogo },
+  { value: 'ocbc', label: 'OCBC', logo: ocbcLogo },
 ]
 
 const canPay = computed(() => {
@@ -126,11 +134,11 @@ function onPay() {
 
       <p v-if="isInstalment" class="method-helper">
         Credit card only
-        <span class="card-brands inline">
-          <span class="brand brand-amex">AMEX</span>
-          <span class="brand brand-mc">MC</span>
-          <span class="brand brand-visa">VISA</span>
-        </span>
+        <img
+          :src="creditCardsLogo"
+          alt="Accepted credit cards"
+          class="brand-img brand-img-inline"
+        />
       </p>
 
       <div v-if="!isInstalment" class="method-row">
@@ -140,11 +148,11 @@ function onPay() {
           :class="{ 'is-on': local.paymentMethod === 'card' }"
           @click="setMethod('card')"
         >
-          <span class="card-brands">
-            <span class="brand brand-amex">AMEX</span>
-            <span class="brand brand-mc">MC</span>
-            <span class="brand brand-visa">VISA</span>
-          </span>
+          <img
+            :src="creditCardsLogo"
+            alt="Accepted credit cards"
+            class="brand-img brand-img-cards"
+          />
         </button>
         <button
           type="button"
@@ -152,7 +160,11 @@ function onPay() {
           :class="{ 'is-on': local.paymentMethod === 'paynow' }"
           @click="setMethod('paynow')"
         >
-          <span class="paynow-logo">PAY<span class="paynow-now">NOW</span></span>
+          <img
+            :src="paynowLogo"
+            alt="PayNow"
+            class="brand-img brand-img-paynow"
+          />
         </button>
       </div>
 
@@ -167,7 +179,11 @@ function onPay() {
           :class="{ 'is-on': local.bank === b.value }"
           @click="setBank(b.value); setMethod('card')"
         >
-          <span :class="['bank-mark', `bank-${b.value}`]">{{ b.label }}</span>
+          <img
+            :src="b.logo"
+            :alt="b.label"
+            class="brand-img brand-img-bank"
+          />
         </button>
       </div>
     </article>
@@ -267,38 +283,26 @@ function onPay() {
 }
 .method-card.is-on { border-color: var(--bdi-green); }
 
-/* Card brand placeholders. Inline text styled to feel like logos without
-   the legal weight of real brand assets in a prototype. */
-.card-brands {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-}
-.card-brands.inline { margin-left: 8px; }
-.brand {
+/* Licensed PNG brand marks (from /04_Design). Heights tuned so each mark
+   reads at roughly the same visual weight inside its container. */
+.brand-img {
   display: inline-block;
-  padding: 3px 6px;
-  font-family: var(--bdi-font);
-  font-size: 10px;
-  font-weight: 800;
-  letter-spacing: 0.05em;
-  line-height: 1;
-  border-radius: 3px;
-  color: #fff;
+  object-fit: contain;
 }
-.brand-amex { background: #2E77BB; }
-.brand-mc   { background: #EB001B; }
-.brand-visa { background: #1A1F71; }
-
-/* PayNow brand placeholder — purple wordmark. */
-.paynow-logo {
-  font-family: var(--bdi-font);
-  font-size: 22px;
-  font-weight: 900;
-  color: #6F2C8E;
-  letter-spacing: 0.02em;
+.brand-img-inline {
+  height: 16px;
+  width: auto;
+  margin-left: 8px;
+  vertical-align: middle;
 }
-.paynow-now { color: #C8133D; }
+.brand-img-cards {
+  height: 24px;
+  width: auto;
+}
+.brand-img-paynow {
+  height: 22px;
+  width: auto;
+}
 
 /* Instalment path */
 .method-helper {
@@ -328,15 +332,11 @@ function onPay() {
   cursor: pointer;
 }
 .bank-card.is-on { border-color: var(--bdi-green); }
-.bank-mark {
-  font-family: var(--bdi-font);
-  font-size: 18px;
-  font-weight: 900;
-  letter-spacing: 0.03em;
+.brand-img-bank {
+  height: 22px;
+  width: auto;
+  max-width: 100%;
 }
-.bank-uob { color: #D31145; }
-.bank-dbs { color: #C8133D; }
-.bank-ocbc { color: #D7141A; }
 
 /* Lock + secure-gateway helper line */
 .secure-note {
