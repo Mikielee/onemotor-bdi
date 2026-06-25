@@ -84,7 +84,7 @@ const routes = [
     path: '/step/14',
     name: 'step-14-policy-summary',
     component: () => import('../views/Step14PolicySummary.vue'),
-    meta: { step: 14, group: 3, omp: 'OMP-NEW', title: 'Policy Summary' },
+    meta: { step: 14, group: 3, omp: 'OMP-653', title: 'Policy Summary' },
   },
   {
     path: '/step/15',
