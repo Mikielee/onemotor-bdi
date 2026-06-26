@@ -165,7 +165,11 @@ function onBack() {
   box-shadow: 0 -10px 15px -3px rgba(0, 0, 0, 0.10);
   display: flex;
   flex-direction: column;
-  margin: auto -16px 0 -16px;
+  /* 36px top margin pushes the footer (and the notch that floats 20px
+     above its top edge) clear of whatever step content sits above it.
+     Negative l/r margins cancel the parent step's 16px padding so the
+     footer spans the full viewport width edge-to-edge. */
+  margin: 36px -16px 0 -16px;
   position: relative;
 }
 
