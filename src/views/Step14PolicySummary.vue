@@ -50,6 +50,51 @@ function maskNric(nric) {
   return `····${nric.slice(-4)}`
 }
 
+function formatAddress(addr) {
+  if (!addr) return '—'
+  const lineOne = [addr.block, addr.street].filter(Boolean).join(' ')
+  const unit = addr.unit ? `#${addr.unit}` : ''
+  const building = addr.buildingName || ''
+  const postal = addr.postalCode ? `Singapore ${addr.postalCode}` : ''
+  return [lineOne, unit, building, postal].filter(Boolean).join(', ') || '—'
+}
+
+const GENDER_LABEL = { male: 'Male', female: 'Female' }
+const MARITAL_LABEL = {
+  single: 'Single',
+  married: 'Married',
+  divorced: 'Divorced',
+  widowed: 'Widowed',
+}
+function labelOr(map, value) {
+  if (!value) return '—'
+  return map[value] || capitalise(value)
+}
+
+const yearsLicensedLabel = computed(() => {
+  const y = quote.drivingHistory?.yearsLicensed
+  if (y === null || y === undefined || y === '') return '—'
+  if (y === 0) return 'Less than 1 year'
+  if (y === 1) return '1 year'
+  return `${y} years`
+})
+const atFaultLabel = computed(() => {
+  const v = quote.drivingHistory?.atFaultClaims
+  if (v === null || v === undefined) return '—'
+  return v === 0 ? 'None' : `${v}`
+})
+const notAtFaultLabel = computed(() => {
+  const v = quote.drivingHistory?.notAtFaultClaims
+  if (v === null || v === undefined) return '—'
+  return v === 0 ? 'None' : `${v}`
+})
+const certOfMeritLabel = computed(() => {
+  const v = quote.drivingHistory?.certificateOfMerit
+  if (v === true) return 'Yes'
+  if (v === false) return 'No'
+  return '—'
+})
+
 const coverTypeLabel = computed(() => ({
   'third-party': 'Third-party',
   'third-party-fire-theft': 'Third-party Fire & Theft',
@@ -222,42 +267,106 @@ function onProceed() {
       </dl>
     </article>
 
-    <!-- Drivers -->
-    <template v-if="mainDriverIsPolicyholder">
-      <h3 class="block-heading">Policyholder &amp; Main driver</h3>
-      <article class="person-card">
-        <div class="person-info">
-          <p class="person-name">{{ policyholderName }}</p>
-          <p class="person-meta">{{ policyholderDob }}</p>
-        </div>
+    <!-- Policyholder (and main driver if same person) -->
+    <article class="card">
+      <header class="card-head">
+        <h2>{{ mainDriverIsPolicyholder ? 'Policyholder & Main driver' : 'Policyholder' }}</h2>
         <button type="button" class="edit-btn" aria-label="Edit policyholder" @click="editTo(12)">
           <i class="pi pi-pencil" aria-hidden="true"></i>
         </button>
-      </article>
-    </template>
-    <template v-else>
-      <h3 class="block-heading">Policyholder</h3>
-      <article class="person-card">
-        <div class="person-info">
-          <p class="person-name">{{ policyholderName }}</p>
-          <p class="person-meta">{{ policyholderDob }}</p>
+      </header>
+      <dl class="card-rows">
+        <div class="row">
+          <dt>Full name</dt>
+          <dd>{{ policyholderName }}</dd>
         </div>
-        <button type="button" class="edit-btn" aria-label="Edit policyholder" @click="editTo(12)">
-          <i class="pi pi-pencil" aria-hidden="true"></i>
-        </button>
-      </article>
+        <div class="row">
+          <dt>NRIC / FIN</dt>
+          <dd>{{ maskNric(quote.policyholder?.nric) }}</dd>
+        </div>
+        <div class="row">
+          <dt>Date of birth</dt>
+          <dd>{{ policyholderDob }}</dd>
+        </div>
+        <template v-if="mainDriverIsPolicyholder">
+          <div class="row">
+            <dt>Gender</dt>
+            <dd>{{ labelOr(GENDER_LABEL, quote.mainDriver?.gender) }}</dd>
+          </div>
+          <div class="row">
+            <dt>Marital status</dt>
+            <dd>{{ labelOr(MARITAL_LABEL, quote.mainDriver?.maritalStatus) }}</dd>
+          </div>
+        </template>
+        <div class="row">
+          <dt>Residential address</dt>
+          <dd>{{ formatAddress(quote.policyholder?.address) }}</dd>
+        </div>
+        <div class="row">
+          <dt>Email</dt>
+          <dd>{{ quote.contact?.email || '—' }}</dd>
+        </div>
+        <div class="row">
+          <dt>Mobile</dt>
+          <dd>{{ quote.contact?.phone || '—' }}</dd>
+        </div>
+      </dl>
+    </article>
 
-      <h3 class="block-heading">Main driver</h3>
-      <article class="person-card">
-        <div class="person-info">
-          <p class="person-name">{{ mainDriverName }}</p>
-          <p class="person-meta">{{ mainDriverDob }}</p>
-        </div>
-        <button type="button" class="edit-btn" aria-label="Edit main driver" @click="editTo(6)">
+    <!-- Driving history (always shown — applies to main driver) -->
+    <article class="card">
+      <header class="card-head">
+        <h2>{{ mainDriverIsPolicyholder ? 'Driving history' : 'Main driver' }}</h2>
+        <button
+          type="button"
+          class="edit-btn"
+          :aria-label="mainDriverIsPolicyholder ? 'Edit driving history' : 'Edit main driver'"
+          @click="editTo(mainDriverIsPolicyholder ? 7 : 10.1)"
+        >
           <i class="pi pi-pencil" aria-hidden="true"></i>
         </button>
-      </article>
-    </template>
+      </header>
+      <dl class="card-rows">
+        <template v-if="!mainDriverIsPolicyholder">
+          <div class="row">
+            <dt>Full name</dt>
+            <dd>{{ mainDriverName }}</dd>
+          </div>
+          <div class="row">
+            <dt>NRIC / FIN</dt>
+            <dd>{{ maskNric(quote.mainDriver?.nric) }}</dd>
+          </div>
+          <div class="row">
+            <dt>Date of birth</dt>
+            <dd>{{ mainDriverDob }}</dd>
+          </div>
+          <div class="row">
+            <dt>Gender</dt>
+            <dd>{{ labelOr(GENDER_LABEL, quote.mainDriver?.gender) }}</dd>
+          </div>
+          <div class="row">
+            <dt>Marital status</dt>
+            <dd>{{ labelOr(MARITAL_LABEL, quote.mainDriver?.maritalStatus) }}</dd>
+          </div>
+        </template>
+        <div class="row">
+          <dt>Years holding a valid licence</dt>
+          <dd>{{ yearsLicensedLabel }}</dd>
+        </div>
+        <div class="row">
+          <dt>At-fault claims (last 5 yrs)</dt>
+          <dd>{{ atFaultLabel }}</dd>
+        </div>
+        <div class="row">
+          <dt>Not-at-fault claims (last 5 yrs)</dt>
+          <dd>{{ notAtFaultLabel }}</dd>
+        </div>
+        <div class="row">
+          <dt>Certificate of Merit</dt>
+          <dd>{{ certOfMeritLabel }}</dd>
+        </div>
+      </dl>
+    </article>
 
     <template v-if="namedDrivers.length > 0">
       <h3 class="block-heading">Named drivers</h3>
