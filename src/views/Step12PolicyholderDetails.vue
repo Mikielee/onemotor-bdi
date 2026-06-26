@@ -32,9 +32,19 @@ import { validateNric, lookupPostal } from '../utils/nric'
 const { quote, mutable } = useQuote()
 const { showErrors, reveal } = useValidation()
 
-// Prefill helpers — pull from the prior steps where the same data lives.
+// Prefill helpers — when main driver = policyholder (chosen at Step 6
+// and confirmed at Step 10.1), the policyholder's name/NRIC/DOB/gender
+// are already collected upstream. We pull them in here so the customer
+// just confirms instead of retyping. Email + mobile come from Step 8;
+// NCD from Step 7. Full name + NRIC come from Step 10.1.
 const mainDriverIsPolicyholder = computed(
   () => quote.mainDriver?.isPolicyholder === true,
+)
+const prefilledFullName = computed(() =>
+  mainDriverIsPolicyholder.value ? quote.mainDriver?.name ?? '' : '',
+)
+const prefilledNric = computed(() =>
+  mainDriverIsPolicyholder.value ? quote.mainDriver?.nric ?? '' : '',
 )
 const prefilledDob = computed(() =>
   mainDriverIsPolicyholder.value ? quote.mainDriver?.dob ?? null : null,
@@ -45,8 +55,8 @@ const prefilledGender = computed(() =>
 
 const local = reactive({
   // Your Details
-  fullName: quote.policyholder?.fullName || '',
-  nric: quote.policyholder?.nric || '',
+  fullName: quote.policyholder?.fullName || prefilledFullName.value,
+  nric: quote.policyholder?.nric || prefilledNric.value,
   dob: quote.policyholder?.dob || prefilledDob.value,
   gender: quote.policyholder?.gender || prefilledGender.value,
   email: quote.policyholder?.email || quote.contact?.email || '',
@@ -156,7 +166,11 @@ const unitError = computed(() => showErrors.value && local.unit.trim().length ==
 
 <template>
   <section class="step">
-    <h1 class="bdi-section-title">Just a few more details to get you covered</h1>
+    <h1 class="bdi-section-title">
+      Just a few details about
+      <span class="ph-emphasis">Policyholder</span>
+      to get you covered
+    </h1>
 
     <!-- Your Details -->
     <div class="block">
@@ -359,6 +373,12 @@ const unitError = computed(() => showErrors.value && local.unit.trim().length ==
   display: flex;
   flex-direction: column;
   gap: 24px;
+}
+
+.ph-emphasis {
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 4px;
 }
 
 .block {
