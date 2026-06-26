@@ -149,6 +149,14 @@ button {
   }
 }
 
+/* Every step page (section.step) fills the available height in .bdi-main
+   so the sticky bar inside can flex-push itself to the bottom of the
+   viewport on short pages. Without this, .step is only as tall as its
+   content and the bar lands mid-screen on Steps with little input. */
+.bdi-main > section.step {
+  flex: 1 0 auto;
+}
+
 /* ============================================================
    Main Button — Figma "Main Button" component.
    Enabled active (primary CTA): green #009A44 + white text.

@@ -383,6 +383,11 @@ const stickyUnit = computed(() =>
       </p>
     </div>
 
+    <!-- Flex-grow spacer that pushes the sticky bar to the bottom of
+         the .step flex column on short pages, while keeping a 36px min
+         gap from the content above (notch breathing room) on long pages. -->
+    <div class="sticky-spacer" aria-hidden="true"></div>
+
     <!-- Step-9 sticky footer (Figma 4754-5410)
          Collapsed: handle + 3-col row (Back / mini-price / Buy now).
          Expanded: handle + Annual/Monthly toggle + mini-breakdown + 3-col row.
@@ -804,6 +809,13 @@ const stickyUnit = computed(() =>
    component — see its .sticky-cta rule. Don't use `position: sticky`
    here; that would dock to the viewport bottom and create a visible gap
    between the sticky bar and the page footer at the end of scroll. */
+/* Flex spacer above the sticky bar — see BdiQuoteFooter for the rationale.
+   Negative l/r margins span the full step width to match the bar. */
+.sticky-spacer {
+  flex: 1 0 36px;
+  margin: 0 -16px;
+}
+
 .sticky-footer {
   /* Pin to viewport bottom while the page scrolls (same pattern as DA
      StickyNext + BdiQuoteFooter). Falls back to its natural flow
@@ -813,7 +825,9 @@ const stickyUnit = computed(() =>
   position: sticky;
   bottom: 0;
   z-index: 20;
-  margin: auto -16px 0 -16px;
+  /* Negative l/r margins span the full step width. Vertical spacing is
+     handled by .sticky-spacer above so margin-top stays 0 here. */
+  margin: 0 -16px 0 -16px;
   background: #fff;
   border-top-left-radius: var(--bdi-radius-card);
   border-top-right-radius: var(--bdi-radius-card);

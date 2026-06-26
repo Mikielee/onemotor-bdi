@@ -61,6 +61,13 @@ function onBack() {
 </script>
 
 <template>
+  <!-- Flex-grow spacer claims any empty vertical space inside the parent
+       .step's flex column. On short pages this pushes the bar to the
+       bottom of the viewport (above the app footer); on long pages it
+       collapses to its 36px min-height, preserving the breathing room
+       between content above and the floating circle notch. -->
+  <div class="bar-spacer" aria-hidden="true"></div>
+
   <div class="footer" :class="{ 'is-expanded': expanded }">
     <button
       type="button"
@@ -168,6 +175,17 @@ function onBack() {
 </template>
 
 <style scoped>
+/* Flex spacer that lives in the parent .step's column. flex-grow: 1
+   claims any remaining vertical space so the bar lands at the viewport
+   bottom on short pages; flex-shrink: 0 + flex-basis: 36px keeps a
+   minimum 36px gap when content overflows so the floating notch still
+   has breathing room from the content above. Negative l/r margins span
+   the full step width in case anything ever paints on it. */
+.bar-spacer {
+  flex: 1 0 36px;
+  margin: 0 -16px;
+}
+
 .footer {
   background: #fff;
   /* 24px top padding gives the floating circle notch (top: -20px) room
@@ -178,11 +196,10 @@ function onBack() {
   box-shadow: 0 -10px 15px -3px rgba(0, 0, 0, 0.10);
   display: flex;
   flex-direction: column;
-  /* 36px top margin pushes the footer (and the notch that floats 20px
-     above its top edge) clear of whatever step content sits above it.
-     Negative l/r margins cancel the parent step's 16px padding so the
-     footer spans the full viewport width edge-to-edge. */
-  margin: 36px -16px 0 -16px;
+  /* Negative l/r margins cancel the parent step's 16px padding so the
+     footer spans the full viewport width edge-to-edge. Vertical spacing
+     is handled by .bar-spacer above so margin-top stays 0 here. */
+  margin: 0 -16px 0 -16px;
   /* Pin to viewport bottom while the page scrolls (same pattern as DA
      StickyNext). Falls back to its natural flow position at the end of
      the scroll so it sits flush above the app footer at page-bottom. */
