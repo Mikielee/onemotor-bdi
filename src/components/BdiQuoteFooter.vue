@@ -157,7 +157,9 @@ function onBack() {
 <style scoped>
 .footer {
   background: #fff;
-  padding: 0 16px 16px 16px;
+  /* 24px top padding gives the floating circle notch (top: -20px) room
+     to breathe so its lower half doesn't overlap the bar content. */
+  padding: 24px 16px 16px 16px;
   border-top-left-radius: 8px;
   border-top-right-radius: 8px;
   box-shadow: 0 -10px 15px -3px rgba(0, 0, 0, 0.10);
