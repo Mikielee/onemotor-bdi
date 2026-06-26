@@ -4,6 +4,7 @@ import StickyNext from '../components/StickyNext.vue'
 import FieldError from '../components/FieldError.vue'
 import { useQuote } from '../store/quote'
 import { useValidation } from '../composables/useValidation'
+import { useDemoAutofill } from '../composables/useDemoAutofill'
 
 const { quote, mutable } = useQuote()
 const { showErrors, reveal } = useValidation()
@@ -56,6 +57,15 @@ const canContinue = computed(() => {
 const usageError = computed(() => showErrors.value && !local.usage)
 const commuteError = computed(() => showErrors.value && showCommute.value && !local.commute)
 const offPeakError = computed(() => showErrors.value && showOffPeak.value && local.offPeak === null)
+
+// Sprint-review demo: Private only / Regular commuting / not off-peak.
+const { register } = useDemoAutofill()
+register(() => {
+  local.usage = 'private-only'
+  local.commute = 'regular'
+  local.offPeak = false
+  sync()
+})
 </script>
 
 <template>

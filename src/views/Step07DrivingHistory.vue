@@ -5,6 +5,7 @@ import StickyNext from '../components/StickyNext.vue'
 import FieldError from '../components/FieldError.vue'
 import { useQuote } from '../store/quote'
 import { useValidation } from '../composables/useValidation'
+import { useDemoAutofill } from '../composables/useDemoAutofill'
 
 const { showErrors, reveal } = useValidation()
 
@@ -123,6 +124,21 @@ const ncdError = computed(() => showErrors.value && local.ncd === null)
 const zeroReasonError = computed(() => showErrors.value && showZeroFollowup.value && local.ncdZeroReason === null)
 const otherCarError = computed(() => showErrors.value && showOtherCar.value && local.otherCarNcd === null)
 const transferredError = computed(() => showErrors.value && showOtherCar.value && local.transferredFrom === null)
+
+// Sprint-review demo: 10 yrs licence, no claims, has CoM, NCD 0% because
+// NCD is on another car at 30%, transferred from current insurer.
+const { register } = useDemoAutofill()
+register(() => {
+  local.yearsLicensed = 10
+  local.atFault = 0
+  local.notAtFault = 0
+  local.certOfMerit = true
+  local.ncd = 0
+  local.ncdZeroReason = 'ncd-other-car'
+  local.otherCarNcd = 30
+  local.transferredFrom = 'current'
+  sync()
+})
 </script>
 
 <template>

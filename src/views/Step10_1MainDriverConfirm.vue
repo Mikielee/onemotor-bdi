@@ -21,6 +21,7 @@ import BdiQuoteFooter from '../components/BdiQuoteFooter.vue'
 import FieldError from '../components/FieldError.vue'
 import { useQuote } from '../store/quote'
 import { useValidation } from '../composables/useValidation'
+import { useDemoAutofill } from '../composables/useDemoAutofill'
 import { validateNric } from '../utils/nric'
 
 const { quote, mutable } = useQuote()
@@ -117,6 +118,16 @@ function onNext() {
   sync()
   router.push('/step/10')
 }
+
+// Sprint-review demo: fills only the two newly-captured fields (Name + NRIC).
+// The other fields prefill from Step 6/7 via the existing chain. NRIC
+// S8945678I is a valid ICA checksum (computed against the S-prefix table).
+const { register } = useDemoAutofill()
+register(() => {
+  local.name = 'Tan Wei Liang'
+  local.nric = 'S8945678I'
+  sync()
+})
 </script>
 
 <template>

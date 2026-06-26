@@ -4,9 +4,15 @@ import StickyNext from '../components/StickyNext.vue'
 import FieldError from '../components/FieldError.vue'
 import { useQuote } from '../store/quote'
 import { useValidation } from '../composables/useValidation'
+import { useDemoAutofill } from '../composables/useDemoAutofill'
 
 const { quote, mutable } = useQuote()
 const { showErrors, reveal } = useValidation()
+
+// Sprint-review demo: header 'Car Insurance' chip fills this step
+// with valid mock data. See composables/useDemoAutofill.js.
+const { register } = useDemoAutofill()
+register(() => { mutable.coverType = 'comprehensive' })
 
 const options = [
   {

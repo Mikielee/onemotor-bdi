@@ -5,9 +5,19 @@ import StickyNext from '../components/StickyNext.vue'
 import FieldError from '../components/FieldError.vue'
 import { useQuote } from '../store/quote'
 import { useValidation } from '../composables/useValidation'
+import { useDemoAutofill } from '../composables/useDemoAutofill'
 
 const { showErrors, reveal } = useValidation()
 const { quote, mutable } = useQuote()
+
+// Sprint-review demo: 2022 Toyota Corolla Altis. Writes straight to
+// the root store so the prefill chain on Step 13 picks it up.
+const { register } = useDemoAutofill()
+register(() => {
+  mutable.carYear = 2022
+  mutable.carMake = 'Toyota'
+  mutable.carModel = 'Corolla Altis'
+})
 
 const CURRENT_YEAR = 2026
 const MAX_AGE_RESTRICTIVE = 15  // Third-party covers cap car age at 15 years

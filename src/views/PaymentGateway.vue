@@ -13,6 +13,7 @@ import { useRouter } from 'vue-router'
 import InputText from 'primevue/inputtext'
 import { useQuote } from '../store/quote'
 import { useQuotePricing } from '../composables/useQuotePricing'
+import { useDemoAutofill } from '../composables/useDemoAutofill'
 import { formatMoney } from '../utils/money'
 import creditCardsLogo from '../assets/payment/credit-cards.png'
 
@@ -78,6 +79,31 @@ function submit() {
 }
 
 function cancel() { router.push('/step/15') }
+
+// Sprint-review demo: generates a fake card derived from the
+// policyholder. Number uses the universally-recognised Stripe test
+// prefix 4242 4242 4242 + the last 4 digits of the policyholder's NRIC
+// so two stakeholders comparing demos see different tails. Cardholder
+// name comes from the policyholder. Expiry is fixed at 12/29 and CVV
+// at 123 — far enough out, format-valid, obviously fake.
+const { register } = useDemoAutofill()
+register(() => {
+  const nric = quote.policyholder?.nric || quote.mainDriver?.nric || ''
+  const tail = (nric.replace(/\D/g, '').slice(-4) || '5678').padStart(4, '0')
+  const cardholder = (
+    quote.policyholder?.fullName
+    || quote.mainDriver?.name
+    || 'Card Holder'
+  ).toUpperCase()
+  local.number = formatCardNumber(`424242424242${tail}`)
+  local.expiry = '12/29'
+  local.cvv = '123'
+  local.name = cardholder
+  errors.number = ''
+  errors.expiry = ''
+  errors.cvv = ''
+  errors.name = ''
+})
 </script>
 
 <template>

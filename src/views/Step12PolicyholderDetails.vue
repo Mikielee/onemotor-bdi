@@ -27,6 +27,7 @@ import BdiQuoteFooter from '../components/BdiQuoteFooter.vue'
 import FieldError from '../components/FieldError.vue'
 import { useQuote } from '../store/quote'
 import { useValidation } from '../composables/useValidation'
+import { useDemoAutofill } from '../composables/useDemoAutofill'
 import { validateNric, lookupPostal } from '../utils/nric'
 
 const { quote, mutable } = useQuote()
@@ -164,6 +165,17 @@ const phoneError = computed(() => showErrors.value && !phoneValid.value)
 const ncdError = computed(() => showErrors.value && local.ncd === null)
 const postalError = computed(() => showErrors.value && !postalValid.value)
 const unitError = computed(() => showErrors.value && local.unit.trim().length === 0)
+
+// Sprint-review demo: sets postal 078878 (the watch then autofills
+// block + street + building name 'Icon Residence' via the postal stub)
+// and unit 41-21. Everything else on this page is prefilled from
+// Step 6/7/8/10.1 by the existing chain.
+const { register } = useDemoAutofill()
+register(() => {
+  local.postalCode = '078878'
+  local.unit = '41-21'
+  sync()
+})
 </script>
 
 <template>

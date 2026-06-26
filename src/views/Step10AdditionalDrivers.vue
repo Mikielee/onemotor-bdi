@@ -26,6 +26,7 @@ import BdiQuoteFooter from '../components/BdiQuoteFooter.vue'
 import FieldError from '../components/FieldError.vue'
 import { useQuote } from '../store/quote'
 import { useValidation } from '../composables/useValidation'
+import { useDemoAutofill } from '../composables/useDemoAutofill'
 import { validateNric } from '../utils/nric'
 
 const { quote, mutable } = useQuote()
@@ -218,6 +219,33 @@ const showAuthorisedPlan = computed(
 )
 
 const atCap = computed(() => local.drivers.length >= MAX_DRIVERS)
+
+// Sprint-review demo: 1 household driver (Lim Mei Ling, valid NRIC),
+// no outside drivers. Lands the page in the validated drivers-list view.
+const { register } = useDemoAutofill()
+register(() => {
+  local.hasHousehold = true
+  mutable.hasAdditionalDrivers = true
+  const demoDriver = {
+    name: 'Lim Mei Ling',
+    nric: 'S7654321F',
+    dob: new Date('1985-06-15'),
+    gender: 'female',
+    maritalStatus: 'married',
+    yearsLicensed: 15,
+    atFault: 0,
+    notAtFault: 0,
+  }
+  local.drivers = [demoDriver]
+  mutable.additionalDrivers = [demoDriver]
+  local.showForm = false
+  local.editingIndex = null
+  local.draft = blankDriver()
+
+  local.hasOutside = false
+  mutable.hasOutsideDrivers = false
+  mutable.authorisedDriverPlan = false
+})
 </script>
 
 <template>

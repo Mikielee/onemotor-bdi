@@ -5,9 +5,23 @@ import StickyNext from '../components/StickyNext.vue'
 import FieldError from '../components/FieldError.vue'
 import { useQuote } from '../store/quote'
 import { useValidation } from '../composables/useValidation'
+import { useDemoAutofill } from '../composables/useDemoAutofill'
 
 const { quote, mutable } = useQuote()
 const { showErrors, reveal } = useValidation()
+
+// Sprint-review demo: header 'Car Insurance' chip seeds a start date
+// 7 days out and a 12-month cover term.
+const { register } = useDemoAutofill()
+register(() => {
+  const start = new Date()
+  start.setDate(start.getDate() + 7)
+  start.setHours(0, 0, 0, 0)
+  const end = new Date(start)
+  end.setFullYear(end.getFullYear() + 1)
+  mutable.coverStartDate = start
+  mutable.coverEndDate = end
+})
 
 const startDate = computed({
   get: () => quote.coverStartDate,

@@ -28,6 +28,7 @@ import BdiQuoteFooter from '../components/BdiQuoteFooter.vue'
 import FieldError from '../components/FieldError.vue'
 import { useQuote } from '../store/quote'
 import { useValidation } from '../composables/useValidation'
+import { useDemoAutofill } from '../composables/useDemoAutofill'
 
 const { quote, mutable } = useQuote()
 const { showErrors, reveal } = useValidation()
@@ -213,6 +214,19 @@ const financingError = computed(() => showErrors.value && local.financing === nu
 const fiError = computed(() =>
   showErrors.value && local.financing === true && !local.financialInstitution,
 )
+
+// Sprint-review demo: VRM SGY1234A, current insurer Income, no financing.
+// Make/Model/Year are already prefilled from Step 3.
+const { register } = useDemoAutofill()
+register(() => {
+  useChassis.value = false
+  local.registrationNumber = 'SGY1234A'
+  local.chassisNumber = ''
+  local.currentInsurer = 'Income'
+  local.financing = false
+  local.financialInstitution = ''
+  sync()
+})
 </script>
 
 <template>

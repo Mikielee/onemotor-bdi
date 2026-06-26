@@ -4,9 +4,17 @@ import StickyNext from '../components/StickyNext.vue'
 import FieldError from '../components/FieldError.vue'
 import { useQuote } from '../store/quote'
 import { useValidation } from '../composables/useValidation'
+import { useDemoAutofill } from '../composables/useDemoAutofill'
 
 const { quote, mutable } = useQuote()
 const { showErrors, reveal } = useValidation()
+
+// Sprint-review demo: 8,000–12,000 km band.
+const { register } = useDemoAutofill()
+register(() => {
+  local.band = '8000-12000'
+  mutable.annualDistance = '8000-12000'
+})
 
 // Figma OMP-91 / 4691-2315: 4 bands, single selection. En-dash range format
 // per the mock-up, and bands cover the full 0-∞ km space with no gaps.

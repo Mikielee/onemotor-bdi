@@ -12,6 +12,8 @@
  * (e.g. DOB at Step 12 when main driver = policyholder) are left to
  * that logic — the demo handler doesn't override them.
  */
+import { onUnmounted } from 'vue'
+
 const handlers = new Set()
 
 export function useDemoAutofill() {
@@ -21,9 +23,11 @@ export function useDemoAutofill() {
         try { fn() } catch (e) { console.error('demo autofill handler failed', e) }
       })
     },
+    // Call from setup(). The handler is auto-removed on component unmount,
+    // so navigating between steps doesn't leave stale handlers in the set.
     register(fn) {
       handlers.add(fn)
-      return () => handlers.delete(fn)
+      onUnmounted(() => handlers.delete(fn))
     },
   }
 }

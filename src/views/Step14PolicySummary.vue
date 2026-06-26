@@ -17,6 +17,7 @@ import { useRouter } from 'vue-router'
 import BdiQuoteFooter from '../components/BdiQuoteFooter.vue'
 import BdiCheckIcon from '../components/BdiCheckIcon.vue'
 import { useQuote } from '../store/quote'
+import { useDemoAutofill } from '../composables/useDemoAutofill'
 
 const { quote } = useQuote()
 const router = useRouter()
@@ -187,6 +188,14 @@ function onProceed() {
   if (!allDisclosuresAccepted.value) return
   router.push('/step/15')
 }
+
+// Sprint-review demo: ticks all 3 disclosures so the Payment CTA is hot.
+const { register } = useDemoAutofill()
+register(() => {
+  acceptedTerms.value = true
+  acceptedDuty.value = true
+  acceptedUnderwriting.value = true
+})
 </script>
 
 <template>

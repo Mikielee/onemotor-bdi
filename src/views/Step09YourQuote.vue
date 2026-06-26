@@ -15,6 +15,7 @@ import { useRouter } from 'vue-router'
 import InputText from 'primevue/inputtext'
 import BdiCheckIcon from '../components/BdiCheckIcon.vue'
 import { useQuote } from '../store/quote'
+import { useDemoAutofill } from '../composables/useDemoAutofill'
 import { formatMoney, formatMoneySigned } from '../utils/money'
 
 const { quote, mutable } = useQuote()
@@ -182,6 +183,16 @@ const carLine = computed(() => {
 // Sticky footer.
 function onBack() { router.back() }
 function onBuy() { router.push('/step/10.1') }
+
+// Sprint-review demo: Single, $600 default excess, promo TEST applied.
+const { register } = useDemoAutofill()
+register(() => {
+  local.paymentTerm = 'single'
+  local.excess = 600
+  local.promoCode = 'TEST'
+  applyPromo()
+  sync()
+})
 
 // Mini-price on the sticky bar: green amount + " / year" inline, then
 // "(incl. GST)" line below.

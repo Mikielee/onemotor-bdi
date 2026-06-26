@@ -6,6 +6,7 @@ import StickyNext from '../components/StickyNext.vue'
 import FieldError from '../components/FieldError.vue'
 import { useQuote } from '../store/quote'
 import { useValidation } from '../composables/useValidation'
+import { useDemoAutofill } from '../composables/useDemoAutofill'
 
 const { quote, mutable } = useQuote()
 const { showErrors, reveal } = useValidation()
@@ -78,6 +79,18 @@ function onNext() {
     router.push('/step/9')
   }, 2500)
 }
+
+// Sprint-review demo: preferred name + email + mobile + Email marketing
+// channel + PDPA consent ticked. No postal code on Step 8.
+const { register } = useDemoAutofill()
+register(() => {
+  local.preferredName = 'Wei Liang'
+  local.email = 'demo@bdi.sg'
+  local.phone = '91234567'
+  local.marketingChannels = ['Email']
+  local.consentPdpa = true
+  sync()
+})
 </script>
 
 <template>

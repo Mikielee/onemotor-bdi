@@ -18,6 +18,7 @@
 import { computed, ref } from 'vue'
 import BdiQuoteFooter from '../components/BdiQuoteFooter.vue'
 import { useQuote } from '../store/quote'
+import { useDemoAutofill } from '../composables/useDemoAutofill'
 import { formatMoney } from '../utils/money'
 
 const { quote, mutable } = useQuote()
@@ -113,6 +114,14 @@ function toggle(id) {
 }
 
 const canContinue = computed(() => true)
+
+// Sprint-review demo: NCD Protector + 24-hr Roadside + Any Workshop.
+const { register } = useDemoAutofill()
+register(() => {
+  const picks = ['ncd-protector', 'roadside-assistance', 'any-workshop']
+  selected.value = new Set(picks)
+  mutable.optionalBenefits = picks
+})
 </script>
 
 <template>

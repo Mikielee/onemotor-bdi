@@ -6,6 +6,7 @@ import StickyNext from '../components/StickyNext.vue'
 import FieldError from '../components/FieldError.vue'
 import { useQuote } from '../store/quote'
 import { useValidation } from '../composables/useValidation'
+import { useDemoAutofill } from '../composables/useDemoAutofill'
 
 const { quote, mutable } = useQuote()
 const { showErrors, reveal } = useValidation()
@@ -52,6 +53,17 @@ const phError = computed(() => showErrors.value && local.isPolicyholder === null
 const genderError = computed(() => showErrors.value && !local.gender)
 const maritalError = computed(() => showErrors.value && !local.maritalStatus)
 const dobError = computed(() => showErrors.value && !local.dob)
+
+// Sprint-review demo: main driver IS the policyholder so Step 12 prefill
+// kicks in; DOB 15 May 1990, Male, Married.
+const { register } = useDemoAutofill()
+register(() => {
+  local.isPolicyholder = true
+  local.gender = 'male'
+  local.maritalStatus = 'married'
+  local.dob = new Date('1990-05-15')
+  sync()
+})
 </script>
 
 <template>

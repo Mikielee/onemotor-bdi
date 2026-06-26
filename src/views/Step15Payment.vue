@@ -22,6 +22,7 @@ import { computed, reactive } from 'vue'
 import { useRouter } from 'vue-router'
 import BdiQuoteFooter from '../components/BdiQuoteFooter.vue'
 import { useQuote } from '../store/quote'
+import { useDemoAutofill } from '../composables/useDemoAutofill'
 
 // Licensed brand logo assets supplied via the project's 04_Design folder.
 // Vite hashes and fingerprints these at build time so deploys stay cache-busted.
@@ -101,6 +102,16 @@ function onPay() {
     router.push('/payment/gateway')
   }
 }
+
+// Sprint-review demo: Single + Credit card (so Pay routes to the gateway,
+// not PayNow QR). Bank stays empty — only Instalment needs a bank pick.
+const { register } = useDemoAutofill()
+register(() => {
+  local.paymentTerm = 'single'
+  local.paymentMethod = 'card'
+  local.bank = ''
+  sync()
+})
 </script>
 
 <template>
