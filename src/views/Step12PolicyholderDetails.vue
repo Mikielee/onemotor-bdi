@@ -87,7 +87,8 @@ const ncdOptions = [
 
 const channels = ['Email', 'SMS', 'Whatsapp']
 
-// Postal code → auto-fill block + street. Unit + building stay manual.
+// Postal code → auto-fill block + street + building name (where known).
+// Unit number is always manual.
 watch(
   () => local.postalCode,
   (code) => {
@@ -96,6 +97,7 @@ watch(
     if (hit) {
       local.block = hit.block
       local.street = hit.street
+      if (hit.buildingName) local.buildingName = hit.buildingName
     }
     sync()
   },

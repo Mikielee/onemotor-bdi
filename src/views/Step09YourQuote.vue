@@ -24,7 +24,9 @@ const local = reactive({
   paymentTerm: quote.quoteSelection?.paymentTerm || 'single',
   excess: quote.quoteSelection?.excess ?? 600,
   promoCode: quote.quoteSelection?.promoCode || '',
-  appliedPromo: null,
+  // Rehydrate any applied promo from the store so navigating back to Step 9
+  // doesn't drop the green "TEST applied" pill.
+  appliedPromo: quote.quoteSelection?.appliedPromo || null,
   promoError: '',
   coverageExpanded: false,
   // Sticky-footer expand state (Figma 4754-5410). When true, shows the
@@ -62,6 +64,10 @@ function sync() {
     paymentTerm: local.paymentTerm,
     excess: local.excess,
     promoCode: local.appliedPromo ? local.appliedPromo.code : '',
+    // Persist the full applied-promo object (code + benefit copy) so the
+    // sticky-bar breakdown on Steps 10+ and the Step 14 summary can render
+    // it without re-doing the lookup.
+    appliedPromo: local.appliedPromo,
   }
 }
 

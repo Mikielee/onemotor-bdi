@@ -110,9 +110,16 @@ function onBack() {
           <span>Authorised Driver Plan</span>
           <span>+{{ formatMoney(pricing.adpImpact.value) }}</span>
         </div>
-        <div v-if="pricing.otherBenefitsCount.value > 0" class="bd-row">
-          <span>Optional benefits ({{ pricing.otherBenefitsCount.value }})</span>
-          <span>+{{ formatMoney(pricing.otherBenefitsImpact.value) }}</span>
+        <!-- Optional benefits — list them individually rather than as a
+             count so stakeholders watching the demo can see exactly which
+             add-ons drive the running total. -->
+        <div
+          v-for="b in pricing.benefitsBreakdown.value"
+          :key="b.id"
+          class="bd-row"
+        >
+          <span>{{ b.label }}</span>
+          <span>+{{ formatMoney(b.amount) }}</span>
         </div>
         <div class="bd-row">
           <span>GST (9%)</span>
@@ -121,6 +128,12 @@ function onBack() {
         <div v-if="pricing.isSingle.value" class="bd-row bd-discount">
           <span>Single payment 3% discount</span>
           <span>Included</span>
+        </div>
+        <!-- Promo: informational row only (TEST promo is a $50 voucher
+             gift, no premium impact). Coloured green to flag the perk. -->
+        <div v-if="pricing.appliedPromo.value" class="bd-row bd-discount">
+          <span>Promo ({{ pricing.appliedPromo.value.code }})</span>
+          <span>{{ pricing.appliedPromo.value.benefit }}</span>
         </div>
       </div>
     </div>
