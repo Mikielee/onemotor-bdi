@@ -116,10 +116,13 @@ const financialInstitutionOptions = [
   { label: 'Other', value: 'Other' },
 ]
 
+// Car make/model/year prefill from Step 3 — same car, just a confirmation
+// step at the end of the journey. Reads from the root store (Step 3 writes
+// there directly) so back-and-forth navigation keeps the latest value.
 const local = reactive({
-  carMake: quote.policyholder?.carDetails?.carMake || quote.carMake || '',
-  carModel: quote.policyholder?.carDetails?.carModel || quote.carModel || '',
-  carYear: quote.policyholder?.carDetails?.carYear || quote.carYear || null,
+  carMake: quote.carMake || '',
+  carModel: quote.carModel || '',
+  carYear: quote.carYear || null,
   registrationNumber: quote.policyholder?.carDetails?.registrationNumber || '',
   chassisNumber: quote.policyholder?.carDetails?.chassisNumber || '',
   currentInsurer: quote.policyholder?.carDetails?.currentInsurer || '',
@@ -147,13 +150,17 @@ watch(() => local.carMake, () => {
 })
 
 function sync() {
+  // Car make/model/year live at the root of the store (Step 3 writes
+  // there). Any edit here propagates back so there's a single source
+  // of truth for the car identity.
+  mutable.carMake = local.carMake
+  mutable.carModel = local.carModel
+  mutable.carYear = local.carYear
+
   mutable.policyholder = {
     ...quote.policyholder,
     carDetails: {
       ...quote.policyholder?.carDetails,
-      carMake: local.carMake,
-      carModel: local.carModel,
-      carYear: local.carYear,
       registrationNumber: local.registrationNumber.trim().toUpperCase(),
       chassisNumber: local.chassisNumber.trim().toUpperCase(),
       currentInsurer: local.currentInsurer,
@@ -172,10 +179,13 @@ function pickFinancing(v) {
 function onVrmInput(v) { local.registrationNumber = (v || '').toUpperCase(); sync() }
 function onChassisInput(v) { local.chassisNumber = (v || '').toUpperCase(); sync() }
 
+// Helper banner is only shown for TPO/TPFT where the 15-year cap is a
+// real eligibility constraint (KB #9). Comprehensive has no age cap, so
+// the banner is hidden on comprehensive quotes.
 const helperText = computed(() =>
   restrictiveCover.value
     ? 'Third-party covers are available for cars up to 15 years old.'
-    : 'We provide Comprehensive cover for cars up to 15 years of age.',
+    : '',
 )
 
 const showFinancingAlert = computed(
@@ -264,9 +274,10 @@ const fiError = computed(() =>
       <FieldError :show="yearError" message="Please select your car registration year." />
     </div>
 
-    <!-- Helper banner: cover-type age reminder. Vertical bar accent picks up
-         the BD red brand colour. -->
-    <div class="helper-banner">
+    <!-- Helper banner: cover-type age reminder. Only renders for TPO/TPFT
+         (Comprehensive has no age cap). Vertical bar accent picks up the
+         BD red brand colour. -->
+    <div v-if="helperText" class="helper-banner">
       <span class="helper-bar" aria-hidden="true"></span>
       <p class="helper-text">{{ helperText }}</p>
     </div>
@@ -304,7 +315,7 @@ const fiError = computed(() =>
           type="button"
           class="alt-link"
           @click="useChassis = false"
-        >I have my Vehicle Registration Number</button>
+        >I want to use Vehicle Registration Number instead</button>
         <FieldError :show="vrmError" message="Enter your chassis number." />
       </template>
     </div>

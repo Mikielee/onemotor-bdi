@@ -158,26 +158,29 @@ function onBack() {
 .footer {
   background: #fff;
   padding: 0 16px 16px 16px;
-  border-top: 1px solid var(--bdi-grey-200);
+  border-top-left-radius: 8px;
+  border-top-right-radius: 8px;
+  box-shadow: 0 -10px 15px -3px rgba(0, 0, 0, 0.10);
   display: flex;
   flex-direction: column;
   margin: auto -16px 0 -16px;
   position: relative;
 }
 
-/* Chevron handle floats above the top edge of the footer, pulling double
-   duty as the affordance for "tap to see breakdown". */
+/* Circular chevron handle floats above the top edge of the footer per
+   Figma 5269-3520. 40x40 white circle, soft shadow, no border. Doubles
+   as the affordance for "tap to see breakdown". */
 .handle {
   position: absolute;
-  top: -16px;
+  top: -20px;
   left: 50%;
   transform: translateX(-50%);
   width: 40px;
-  height: 24px;
+  height: 40px;
   background: #fff;
-  border: 1px solid var(--bdi-grey-200);
-  border-bottom: 0;
-  border-radius: 12px 12px 0 0;
+  border: 0;
+  border-radius: 50%;
+  box-shadow: 0 -2px 6px rgba(0, 0, 0, 0.08);
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -185,7 +188,7 @@ function onBack() {
   color: var(--bdi-carbon);
   padding: 0;
 }
-.handle .pi { font-size: 14px; }
+.handle .pi { font-size: 18px; font-weight: 700; }
 
 .expanded {
   padding-top: 16px;
