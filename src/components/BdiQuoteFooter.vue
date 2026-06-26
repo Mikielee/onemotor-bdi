@@ -183,7 +183,12 @@ function onBack() {
      Negative l/r margins cancel the parent step's 16px padding so the
      footer spans the full viewport width edge-to-edge. */
   margin: 36px -16px 0 -16px;
-  position: relative;
+  /* Pin to viewport bottom while the page scrolls (same pattern as DA
+     StickyNext). Falls back to its natural flow position at the end of
+     the scroll so it sits flush above the app footer at page-bottom. */
+  position: sticky;
+  bottom: 0;
+  z-index: 20;
 }
 
 /* Circular chevron handle floats above the top edge of the footer per

@@ -805,7 +805,14 @@ const stickyUnit = computed(() =>
    here; that would dock to the viewport bottom and create a visible gap
    between the sticky bar and the page footer at the end of scroll. */
 .sticky-footer {
-  position: relative;
+  /* Pin to viewport bottom while the page scrolls (same pattern as DA
+     StickyNext + BdiQuoteFooter). Falls back to its natural flow
+     position at the end of the scroll so it sits flush above the app
+     footer at page-bottom. The handle's absolute positioning still
+     anchors to .sticky-footer because sticky is a non-static position. */
+  position: sticky;
+  bottom: 0;
+  z-index: 20;
   margin: auto -16px 0 -16px;
   background: #fff;
   border-top-left-radius: var(--bdi-radius-card);
