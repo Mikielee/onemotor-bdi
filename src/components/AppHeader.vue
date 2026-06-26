@@ -1,5 +1,11 @@
 <script setup>
 import logoUrl from '../assets/budget-direct-logo.png'
+import { useDemoAutofill } from '../composables/useDemoAutofill'
+
+// The 'Car Insurance' chip in the header doubles as a sprint-review
+// demo trigger. Each step page registers a fill handler; clicking
+// the chip runs the current page's handler. See useDemoAutofill.js.
+const { trigger } = useDemoAutofill()
 </script>
 
 <template>
@@ -8,7 +14,12 @@ import logoUrl from '../assets/budget-direct-logo.png'
       <img :src="logoUrl" alt="Budget Direct Insurance" />
     </a>
     <div class="bdi-header-right">
-      <button class="bdi-product-chip" type="button">
+      <button
+        class="bdi-product-chip"
+        type="button"
+        title="Demo: autofill this page"
+        @click="trigger"
+      >
         <i class="pi pi-car bdi-chip-icon" aria-hidden="true"></i>
         <span>Car Insurance</span>
       </button>
