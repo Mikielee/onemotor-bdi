@@ -77,10 +77,15 @@
   master:
     - label sits in the field when empty; shrinks onto the top border (white
       notch) when focused or filled - the field name never disappears
-    - error = red border + FieldError caption below, revealed only after a
-      blocked Next click
-  bd: { file: src/components/BdiFloatInput.vue (PrimeVue FloatLabel variant=on), skin: green focus border }
-  da: { file: per-view Material outlined pattern, skin: blue focus border }
+    - "three border states: EMPTY = grey, FILLED = brand accent (kept after
+      blur so the customer can scan which fields are done), ERROR = red.
+      An empty field must never wear the filled accent - it reads as
+      prefilled/done when it isn't (regression caught 3 Jul 2026: the old
+      :not(:placeholder-shown) selector marked placeholder-less float inputs
+      green while empty; BD now keys off PrimeVue's .p-filled)"
+    - error revealed only after a blocked Next click (+ eager postal blur)
+  bd: { file: src/components/BdiFloatInput.vue (PrimeVue FloatLabel variant=on), skin: green focus/filled border }
+  da: { file: src/components/DaFloatingInput.vue, skin: blue focus/filled border }
 
 - component: date-field
   master:

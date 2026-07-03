@@ -334,14 +334,18 @@ button {
    and see which fields are "done". Errors still win because the global
    .is-error rule below uses !important.
 
-   Text input: `:not(:placeholder-shown)` is true once the user has typed
-   anything (every BDI input has a placeholder, so this is reliable).
+   Text input: PrimeVue adds `.p-filled` when the model has a value. Do NOT
+   use `:not(:placeholder-shown)` here — the floating-label inputs have no
+   placeholder attribute (the label plays that role), so that selector marked
+   EMPTY fields green (empty Name/NRIC on Step 10.1 looked prefilled when
+   they were not — caught by Mikie 3 Jul 2026).
    Select: PrimeVue v4 keeps `.p-placeholder` on the label until a value is
    picked; once picked, the class drops, so `:has(...:not(.p-placeholder))`
    matches filled selects.
 
-   The BdiDateField component handles its own filled state via .is-filled. */
-.p-inputtext:enabled:not(:placeholder-shown):not(.is-error),
+   The BdiDateField component handles its own filled state via .is-filled;
+   BdiSearchSelect via .is-filled on its field button. */
+.p-inputtext.p-filled:enabled:not(.is-error),
 .p-select:not(.p-disabled):not(.p-focus):not(.is-error):has(.p-select-label:not(.p-placeholder)) {
   border-color: var(--bdi-green) !important;
 }
