@@ -23,13 +23,14 @@ Notion KB data source: `e15575d2-5e3d-49fe-ace4-934a4dbfbb45`.
 | KB-9 | Third-party covers cap car age at 15 years | 🟢 Confirmed | P01, P03, P13 | Step03YearMakeModel.vue (year filter + clear), Step13VehicleDetails.vue (helper banner) |
 | KB-10 | Step 4 private-and-business skips commute question | 🟢 Confirmed | P04 | Step04CarUsage.vue |
 | KB-11 | Premium display: never "per year"; GST as line item only; sticky mirrors card | 🟢 Confirmed | P09, P15, sticky bars | Step09YourQuote.vue, components/BdiQuoteFooter.vue, store/quote.js |
+| KB-12 | Prefill logic — cross-step field carry-over (Notion `39271919-1ce8-81b2`) | 🟢 Confirmed | P03, P06, P07, P08, P10.1, P12, P13, P14 | journey-spec/prefill-map.md (source of truth); Step10_1MainDriverConfirm.vue, Step12PolicyholderDetails.vue, Step13VehicleDetails.vue prefill blocks |
 
 ## Post-sync hash entries (Notion rows newer than the mirror)
 
 | Id | Item | Status | Cited in code |
 |---|---|---|---|
 | KB-f1898394 | Single/Instalment naming; cover term flexes 7–18 months | 🟢 Confirmed (Sprint Review 12 Jun 2026) | Step09YourQuote.vue, store/quote.js, Step02CoverStartDate.vue (end-date min/max) |
-| KB-98cd9339 | Marketing prefs relocation Step 8 vs Step 12 | 🟠 Pending (OD-3) | Step12PolicyholderDetails.vue, Step08PolicyholderContact.vue |
+| KB-98cd9339 | Marketing prefs relocation Step 8 vs Step 12 | 🟢 Decided — Notion row `0740b4db` "Marketing flags replayed on Step 12 (consent NOT replayed)" is Confirmed; prototype matches (OD-3 closed 3 Jul 2026) | Step12PolicyholderDetails.vue, Step08PolicyholderContact.vue |
 | KB-ef6fa273 | Step 14 inline-edit decision | 🟠 Pending (OD-2) | — (see step-14 spec) |
 
 ## Flags for the next KB sync

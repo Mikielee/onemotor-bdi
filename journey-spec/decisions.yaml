@@ -22,7 +22,10 @@
     to the source step
   kb: KB-ef6fa273
   owner: Design (Mikie) + Oliver
-  status: pending
+  status: decided           # direction chosen: Notion row 53a14298 "Policy Summary
+                            # — editable in-place (no nav away)" is In Design.
+                            # Implementation outstanding (prototype still routes
+                            # away via pencils).
   current-implementation: pencils route back to source steps (1, 12, 13, 10, 10.1;
     driving history to 7 when main driver = policyholder)
   affects: [step-14]
@@ -30,11 +33,13 @@
 - id: OD-3
   question: Marketing preferences collected on both Step 8 and Step 12 — keep both
     or collapse to one
-  kb: KB-98cd9339
+  kb: [KB-98cd9339, KB-12]
   owner: Design + Marketing
-  status: pending
+  status: implemented       # decided in Notion (row 0740b4db, Confirmed): marketing
+                            # flags ARE replayed on Step 12; PDPA consent is NOT
+                            # replayed. Prototype matches. Closed 3 Jul 2026.
   current-implementation: both pages show the channel picker; Step 12 prefills from
-    Step 8, both write to the store
+    Step 8; consent asked once at Step 8 only
   affects: [step-08, step-12]
 
 - id: OD-4

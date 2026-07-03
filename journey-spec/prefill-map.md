@@ -5,6 +5,10 @@ journey, factoring the main-driver-is/isn't-policyholder branch. Sourced from
 the page specs (`pages/*.yaml`), the IDIT per-role field table (KB-1), and
 Mikie's color-coded Figma reference (3 Jul 2026).
 
+**Logged in the Requirements KB as KB-12** ("Prefill logic — cross-step field
+carry-over", Notion `39271919-1ce8-81b2`, Confirmed 3 Jul 2026). This file is
+the machine-readable source of truth that KB row points at — keep them in step.
+
 ## Color legend (matches the Figma reference)
 
 | Color | Meaning | Born at |
