@@ -108,7 +108,7 @@ exceptions:
   - "field tiers (draft, OD-6): primary = NRIC, email, full name, gender, DOB;
      secondary = mobile (Policy Manager-only change), postal code"
 
-open-decisions: [OD-1, OD-3, OD-6]
+open-decisions: [OD-1, OD-3, OD-6, OD-10]
 
 demo-autofill: postal 078878 (autofills 10 Gopeng Street + Icon Residence) + unit
   41-21; identity fields arrive via the prefill chain

@@ -22,6 +22,7 @@ worse than no spec. The same-commit rule is also recorded in the project CLAUDE.
 | `decisions.yaml` | Open-decision registry (OD-n ids). Pending business calls + what each affects |
 | `kb-registry.md` | Canonical KB ids → Notion pages → citing code files |
 | `components.yaml` | Master component registry — cross-brand (BD/DA) contract per shared component: master behavior, per-brand skins, intentional divergences. Read before building or restyling any shared component on either prototype |
+| `prefill-map.md` | Every field: where it's born, where it flows, and the MD=PH vs MD≠PH scenario matrix. Read before adding a field or wiring a prefill |
 
 ## Page spec schema
 

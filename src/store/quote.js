@@ -1,4 +1,45 @@
-import { reactive, readonly } from 'vue'
+import { reactive, readonly, watch } from 'vue'
+
+// --- sessionStorage persistence (prototype-only) ---
+// A mid-journey browser refresh used to wipe the in-memory store, which made
+// every prefill look broken during demos. The quote now survives refresh in
+// THIS tab; opening a new tab still starts a clean journey. Bump the key
+// when the schema changes.
+const STORAGE_KEY = 'bdi-quote-v1'
+
+function reviveDates(node) {
+  if (Array.isArray(node)) { node.forEach(reviveDates); return node }
+  if (node && typeof node === 'object') {
+    for (const k of Object.keys(node)) {
+      const v = node[k]
+      if (typeof v === 'string' && (k === 'dob' || k.endsWith('Date'))) {
+        const d = new Date(v)
+        if (!Number.isNaN(d.getTime())) node[k] = d
+      } else {
+        reviveDates(v)
+      }
+    }
+  }
+  return node
+}
+
+// Permissive merge: recurse into matching plain objects, otherwise take the
+// saved value (including keys the initial shape doesn't declare, since some
+// steps add fields dynamically — e.g. payment, policyholder extras).
+function mergeSaved(target, saved) {
+  for (const k of Object.keys(saved)) {
+    const sv = saved[k]
+    const tv = target[k]
+    if (
+      sv && typeof sv === 'object' && !Array.isArray(sv) && !(sv instanceof Date)
+      && tv && typeof tv === 'object' && !Array.isArray(tv) && !(tv instanceof Date)
+    ) {
+      mergeSaved(tv, sv)
+    } else {
+      target[k] = sv
+    }
+  }
+}
 
 const state = reactive({
   coverType: null,
@@ -73,6 +114,16 @@ const state = reactive({
     },
   },
 })
+
+// Hydrate from this tab's snapshot, then keep the snapshot current.
+try {
+  const saved = JSON.parse(sessionStorage.getItem(STORAGE_KEY) || 'null')
+  if (saved) mergeSaved(state, reviveDates(saved))
+} catch { /* corrupted snapshot: start clean */ }
+
+watch(state, (s) => {
+  try { sessionStorage.setItem(STORAGE_KEY, JSON.stringify(s)) } catch { /* quota/private mode: skip */ }
+}, { deep: true })
 
 function setField(path, value) {
   const keys = path.split('.')

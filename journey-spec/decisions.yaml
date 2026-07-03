@@ -92,3 +92,17 @@
   status: pending
   current-implementation: placeholder copy drafted in-prototype, not legal-approved
   affects: [step-14]
+
+- id: OD-10
+  question: Should the pre-quote contact details (Step 8 email/mobile, and the
+    preferred name) carry over to Step 12, especially when main driver != policyholder?
+    The pre-quote "how should we contact you" answers may belong to the main driver
+    filling the form, not the policyholder being insured.
+  source: Figma annotation on the Policyholders post-quote frame ("Should we bring
+    over the preferred name and contact details fro pre quote?"), 3 Jul 2026
+  owner: Design (Mikie) + Oliver
+  status: pending
+  current-implementation: email + mobile prefill Step 12 from Step 8 in BOTH
+    scenarios (editable); preferred name is never carried into full name (Figma
+    note - prefill not recommended, preferred != legal name)
+  affects: [step-08, step-12]

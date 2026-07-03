@@ -50,7 +50,7 @@ effects:
     educational tips, then routes to /step/9 (prototype-only simulation of the
     IDIT POST)
 
-open-decisions: [OD-3]
+open-decisions: [OD-3, OD-10]
 
 demo-autofill: Wei Liang / demo@bdi.sg / 91234567 / Email channel / PDPA ticked
 
