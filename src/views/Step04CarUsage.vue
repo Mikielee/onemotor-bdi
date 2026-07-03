@@ -1,4 +1,9 @@
 <script setup>
+/**
+ * Step 4 — Car Usage (OMP-90).
+ * Figma canvas: 3983-1768.
+ * Spec: journey-spec/pages/step-04.yaml. Commute-skip branch per KB-10.
+ */
 import { computed, reactive } from 'vue'
 import StickyNext from '../components/StickyNext.vue'
 import FieldError from '../components/FieldError.vue'

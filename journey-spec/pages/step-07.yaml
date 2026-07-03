@@ -1,0 +1,81 @@
+page: 7
+route: /step/7
+title: Driving History
+brand: BD
+omp: OMP-93
+figma:
+  canvas: "3994-21033"
+  ncd-follow-ups: "4708-3143"
+code: src/views/Step07DrivingHistory.vue
+kb: [KB-3, KB-4, KB-5, KB-6, KB-8]
+footer: StickyNext
+
+fields:
+  - id: yearsLicensed
+    label: Years of valid driving licence
+    store: drivingHistory.yearsLicensed
+    required: true
+    validation: 0-40 ("Less than 1 year" = 0)
+  - id: atFaultClaims
+    label: Total number of at-fault accidents and/or claims (3 years prior)
+    store: drivingHistory.atFaultClaims
+    required: true
+    validation: chips 0 | 1 | 2 | 3 | 4+ (KB-3)
+  - id: notAtFaultClaims
+    label: Total number of not-at-fault accidents and/or claims (3 years prior)
+    store: drivingHistory.notAtFaultClaims
+    required: true
+    validation: chips 0 | 1 | 2 | 3 | 4 | 5+ (KB-3)
+  - id: certificateOfMerit
+    label: Entitled to Certificate of Merit?
+    store: drivingHistory.certificateOfMerit
+    required: true
+    validation: boolean
+    notes: pricing factor up to 15% discount (KB-5)
+  - id: ncd
+    label: Policyholder's No Claim Discount (NCD) at renewal
+    store: drivingHistory.ncd
+    required: true
+    validation: 0 | 10 | 20 | 30 | 40 | 50 (60% is DA-only, KB-6; BD caps at 50)
+  - id: ncdZeroReason
+    label: NCD is 0% because
+    store: drivingHistory.ncdZeroReason
+    required: only when ncd = 0
+    validation: new-driver | no-previous-insurance | claims-past-year | ncd-other-car
+  - id: otherCarNcd
+    label: What is your NCD on the other car?
+    store: drivingHistory.otherCarNcd
+    required: only when ncdZeroReason = ncd-other-car
+    validation: 0-50 in 10s
+  - id: transferredFrom
+    label: NCD transferred from
+    store: drivingHistory.transferredFrom
+    required: only when ncdZeroReason = ncd-other-car
+    validation: current | previous (insurer)
+
+conditions:
+  - when: ncd changes to anything != 0
+    then: ncdZeroReason, otherCarNcd, transferredFrom are all cleared
+  - when: ncdZeroReason changes away from ncd-other-car
+    then: otherCarNcd and transferredFrom are cleared
+
+effects:
+  - ncd prefills Step 12 policyholder NCD (KB-4/KB-8 - NCD attaches to policyholder
+    and main driver, never to additional drivers)
+  - yearsLicensed / atFault / notAtFault / certOfMerit prefill Step 10.1 as
+    editable confirmations and render on the Step 14 driving-history card
+
+exceptions:
+  - "UW cut-offs per KB-3: AF 4+ rejected, NAF 5+ rejected. Blocker pop-up (OMP-16
+    pattern) NOT yet wired in the prototype - see OD-4"
+
+open-decisions: [OD-4]
+
+demo-autofill: 10 yrs licence, 0 AF, 0 NAF, CoM Yes, NCD 0% -> NCD on another car
+  30% -> transferred from current insurer
+
+acceptance-criteria:
+  - "Given ncd = 0, then the reason dropdown reveals and is required"
+  - "Given reason = ncd-other-car, then other-car NCD and transferred-from reveal and are required"
+  - "Given ncd changes 0 -> 30, then all three follow-up answers clear from the store"
+  - "Given AF = 4+ or NAF = 5+, then a UW blocker should stop the journey (KB-3) - pending OD-4"

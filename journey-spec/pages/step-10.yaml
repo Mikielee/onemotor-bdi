@@ -1,0 +1,57 @@
+page: 10
+route: /step/10
+title: Additional Drivers
+brand: BD
+omp: OMP-361
+figma:
+  canvas: "1735-2956"
+code: src/views/Step10AdditionalDrivers.vue
+kb: [KB-1, KB-3, KB-4, KB-5]
+footer: BdiQuoteFooter
+
+fields:
+  - id: hasAdditionalDrivers
+    label: Does anyone else in your household drive this car?
+    store: hasAdditionalDrivers
+    required: true
+    validation: boolean; if true, at least 1 saved driver required (max 8 per OMP-19)
+  - id: additionalDrivers[]
+    label: per-driver form
+    store: additionalDrivers
+    validation: "each driver: name (non-empty), nric (ICA checksum), dob, gender,
+      maritalStatus, yearsLicensed, atFault chips 0-4+, notAtFault chips 0-5+ (KB-3
+      mirrors Step 7 arrays)"
+    notes: NO NCD per driver (KB-4). NO COM per driver currently - conflict between
+      KB-1 (omits) and KB-5 (requires), see OD-7. Form not final until resolved.
+  - id: hasOutsideDrivers
+    label: Will anyone outside your household drive this car?
+    store: hasOutsideDrivers
+    required: true
+    validation: boolean
+
+conditions:
+  - when: hasAdditionalDrivers = true
+    then: driver form opens; Q2 (outside household) hides until >= 1 driver saved
+  - when: hasAdditionalDrivers switches to false
+    then: saved drivers are cleared
+  - when: hasOutsideDrivers = true
+    then: Authorised Driver Plan is added (+$200) with the warning callout
+      (unnamed-driver exclusions - 2+ at-fault accidents in 3 years not covered)
+
+effects:
+  - each saved driver adds +$50 premium (Impact on Premium pill + sticky breakdown)
+  - authorisedDriverPlan adds +$200 (sticky breakdown row)
+  - named drivers render on Step 14 with name + DOB and the Household plan card
+
+exceptions:
+  - "per-driver AF 4+/NAF 5+ UW cut-offs (KB-3) not wired - blocker pending OD-4"
+
+open-decisions: [OD-4, OD-7]
+
+demo-autofill: 1 household driver (Lim Mei Ling, S7654321F), no outside drivers
+
+acceptance-criteria:
+  - "Given household = yes and no driver saved, when Next is clicked, then journey blocks with the add-driver error"
+  - "Given a driver is saved, then the premium impact pill shows +$50.00 per driver"
+  - "Given outside drivers = yes, then Authorised Driver Plan (+$200) and its warning callout render"
+  - "Given the per-driver form, then NO NCD field is present (KB-4)"

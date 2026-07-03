@@ -1,0 +1,71 @@
+page: 13
+route: /step/13
+title: Vehicle Details
+brand: BD
+omp: OMP-652
+figma:
+  canvas: "2131-1607"
+  mobile: ["3329:43143", "3329:41901"]
+code: src/views/Step13VehicleDetails.vue
+kb: [KB-7, KB-9]
+footer: BdiQuoteFooter
+
+fields:
+  - id: carMake / carModel / carYear
+    store: carMake / carModel / carYear (root - same car as Step 3)
+    required: true
+    prefill: { from: Step 3, always: true, editable: true }
+    notes: edits here write BACK to the root store (single source of truth)
+  - id: registrationNumber
+    label: Vehicle Registration Number
+    store: policyholder.carDetails.registrationNumber
+    required: XOR with chassisNumber (OMP-85 decision)
+    validation: non-empty, auto-uppercased, max 10
+  - id: chassisNumber
+    label: Chassis number
+    store: policyholder.carDetails.chassisNumber
+    required: XOR with registrationNumber
+    validation: non-empty, max 17
+    notes: toggle link "I don't have Vehicle Registration Number yet" swaps VRM ->
+      chassis; reverse link reads "I want to use Vehicle Registration Number
+      instead"; switching clears the other field
+  - id: currentInsurer
+    label: Current insurer (optional)
+    store: policyholder.carDetails.currentInsurer
+    required: false
+    validation: dropdown incl. "Other" and "I don't have one" (OMP-85 - optional)
+  - id: financing
+    label: Is your car under any financing?
+    store: policyholder.carDetails.financing
+    required: true
+    validation: boolean
+  - id: financialInstitution
+    store: policyholder.carDetails.financialInstitution
+    required: only when financing = true
+    validation: dropdown (DBS, OCBC, UOB, Maybank, SCB, HSBC, Citi, HLF, TCL, Other)
+
+conditions:
+  - when: coverType is TPO/TPFT
+    then: helper banner shows "Third-party covers are available for cars up to 15
+      years old" (KB-9); banner HIDDEN for Comprehensive (no age cap)
+  - when: financing = true AND coverType is TPO/TPFT
+    then: warning callout - financiers usually require Comprehensive
+  - when: financing switches to false
+    then: financialInstitution clears
+  - brand-gate: NO odometer field on BD (KB-7 - DA-only)
+
+effects:
+  - registrationNumber (or chassis) renders on the Step 14 car-details card
+
+notes:
+  - store seeds policyholder.carDetails.accidentClaimDate and .ownership but NO
+    page collects them today (they moved around during the OMP-85 redesign and
+    were dropped) - removal candidates or a future story
+
+demo-autofill: VRM SGY1234A, insurer Income, financing No
+
+acceptance-criteria:
+  - "Given Comprehensive cover, then no 15-year helper banner shows (KB-9)"
+  - "Given neither VRM nor chassis filled, when Next is clicked, then the visible input errors and journey blocks"
+  - "Given financing = yes and no institution picked, when Next is clicked, then the institution errors and journey blocks"
+  - "Given the BD brand, then no odometer capture exists on this page (KB-7)"

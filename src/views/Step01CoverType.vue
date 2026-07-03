@@ -1,4 +1,9 @@
 <script setup>
+/**
+ * Step 1 — Cover Type (OMP-87).
+ * Figma canvas: 3902-1286; error state: 4691-2.
+ * Spec: journey-spec/pages/step-01.yaml
+ */
 import { computed } from 'vue'
 import StickyNext from '../components/StickyNext.vue'
 import FieldError from '../components/FieldError.vue'

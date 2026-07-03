@@ -1,0 +1,94 @@
+# Open-decision registry — the landing place for business calls not yet made.
+# Status: pending -> decided -> implemented. Never reuse an id.
+# "current-implementation" = what the prototype does TODAY while the decision is open.
+
+- id: OD-1
+  question: How to handle contact update against an active proposal (stale proposal
+    can be paid through any channel with no check at point of payment; claims and
+    data-integrity risk)
+  source: Contact validation meeting with IT (Chou Wee, Andy, Stanley), 29 Jun 2026;
+    minutes circulated 3 Jul 2026
+  owner: IT + Oliver
+  status: pending
+  current-implementation: prototype ignores it — no proposal-vs-contact cross-check
+    anywhere in Steps 12-17
+  notes: IT position is any check should be a new IDIT API, not a middleware chain.
+    Lighter alternative discussed (validate before purchase + cross-check at point
+    of purchase) not adopted; part 2 likely not feasible for December.
+  affects: [step-12, step-14, step-15, payment-gateway]
+
+- id: OD-2
+  question: Step 14 summary page — inline edit on the page vs pencil routing back
+    to the source step
+  kb: KB-ef6fa273
+  owner: Design (Mikie) + Oliver
+  status: pending
+  current-implementation: pencils route back to source steps (1, 12, 13, 10, 10.1;
+    driving history to 7 when main driver = policyholder)
+  affects: [step-14]
+
+- id: OD-3
+  question: Marketing preferences collected on both Step 8 and Step 12 — keep both
+    or collapse to one
+  kb: KB-98cd9339
+  owner: Design + Marketing
+  status: pending
+  current-implementation: both pages show the channel picker; Step 12 prefills from
+    Step 8, both write to the store
+  affects: [step-08, step-12]
+
+- id: OD-4
+  question: UW reject screens for AF 4+ / NAF 5+ (KB-3 cut-offs) — blocker pop-up
+    per OMP-16 pattern is documented in AC but not wired in the prototype
+  kb: KB-3
+  owner: Design + UW
+  status: decided            # rule confirmed by UW; implementation outstanding
+  current-implementation: chips render 4+ / 5+ as selectable with no blocker;
+    journey proceeds normally
+  affects: [step-07, step-10]
+
+- id: OD-5
+  question: Quote ID and Policy ID generation — real formats and issuing system
+  owner: IT
+  status: pending
+  current-implementation: Quote ID hardcoded P11254149R00 (Steps 9 and 14);
+    Policy ID random BDI-<date>-<rand> on Step 17; PayNow ref random PN<date>-<rand>
+  affects: [step-09, step-14, step-16, step-17]
+
+- id: OD-6
+  question: Final primary vs secondary field list for IDIT ValidateContact
+    (last name removed; is first name primary?)
+  source: Contact validation meeting 29 Jun 2026, action point 2
+  owner: Stanley
+  status: pending
+  current-implementation: prototype collects the draft set (NRIC, email, full name,
+    gender, DOB primary; mobile, postal secondary) with no ValidateContact call
+  affects: [step-12]
+
+- id: OD-7
+  question: COM (Certificate of Merit) for named drivers — Pricing requires it
+    (up to 15% discount), IDIT mandatory-field table omits it
+  kb: [KB-1, KB-5]
+  owner: Pricing + IT
+  status: pending
+  current-implementation: Step 10 named-driver form omits COM (follows KB-1 table);
+    named-driver form not final until the conflict resolves
+  affects: [step-10]
+
+- id: OD-8
+  question: Instalment payment — one button per bank (IPP redirects to bank-specific
+    page, not the standard gateway). Bank list, redirect target, callback URL TBC
+  kb: KB-2
+  owner: IT
+  status: pending
+  current-implementation: bank picker (UOB / DBS / OCBC) exists on Step 15 but all
+    routes go to the generic mock gateway, not bank IPP URLs
+  affects: [step-15, payment-gateway]
+
+- id: OD-9
+  question: Legal review of the three disclosure texts on Step 14 (T&Cs, duty of
+    disclosure, underwriting declaration)
+  owner: Legal
+  status: pending
+  current-implementation: placeholder copy drafted in-prototype, not legal-approved
+  affects: [step-14]

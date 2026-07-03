@@ -1,4 +1,10 @@
 <script setup>
+/**
+ * Step 6 — Main Driver (OMP-92).
+ * Figma canvas: 3994-19086.
+ * Spec: journey-spec/pages/step-06.yaml. isPolicyholder drives the whole
+ * downstream prefill chain (Step 10.1 identity, Step 12 prefill, Step 14 cards).
+ */
 import { computed, reactive } from 'vue'
 import Select from 'primevue/select'
 import BdiDateField from '../components/BdiDateField.vue'

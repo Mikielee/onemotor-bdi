@@ -97,7 +97,7 @@ const instalmentValue = computed(() => annualTotal.value / 12)
 const heroAmount = computed(() =>
   local.paymentTerm === 'instalment' ? formatMoney(instalmentValue.value) : formatMoney(annualTotal.value)
 )
-// Cover term is 7–18 months (KB #11 / f1898394), so "per year" would be
+// Cover term is 7–18 months (KB-11 / KB-f1898394), so "per year" would be
 // inaccurate and could fall foul of MAS premium-display rules. Use "Total"
 // for Single (no time claim, term is detailed in the policy itself), and
 // "per month" for Instalment (factually correct billing cadence). We drop

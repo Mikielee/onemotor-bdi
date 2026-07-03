@@ -1,4 +1,10 @@
 <script setup>
+/**
+ * Step 7 — Driving History (OMP-93).
+ * Figma canvas: 3994-21033; NCD follow-up states: 4708-3143.
+ * Spec: journey-spec/pages/step-07.yaml. AF/NAF chip arrays per KB-3
+ * (4+/5+ UW cut-offs — blocker pending, OD-4). NCD 60% tier is DA-only (KB-6).
+ */
 import { computed, reactive } from 'vue'
 import Select from 'primevue/select'
 import StickyNext from '../components/StickyNext.vue'

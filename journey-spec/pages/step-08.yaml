@@ -1,0 +1,60 @@
+page: 8
+route: /step/8
+title: Policyholder Contact
+brand: BD
+omp: OMP-94
+figma:
+  canvas: "3997-7575"
+  desktop-channels: "3997:7960"
+code: src/views/Step08PolicyholderContact.vue
+kb: [KB-98cd9339]
+footer: StickyNext
+
+fields:
+  - id: preferredName
+    label: Preferred name
+    store: contact.preferredName
+    required: true
+    validation: non-empty
+  - id: email
+    label: Email
+    store: contact.email
+    required: true
+    validation: basic email regex
+  - id: phone
+    label: Mobile
+    store: contact.phone
+    required: true
+    validation: SG mobile - 8 digits, starts with 8 or 9; +65 prefix rendered fixed
+  - id: marketingChannels
+    label: Keep me updated for any special deals
+    store: contact.marketingChannels
+    required: false
+    validation: multi-select of Email | SMS | Whatsapp
+  - id: consentPdpa
+    label: PDPA acknowledgement
+    store: contact.consentPdpa
+    required: true
+    validation: must be true to continue
+
+conditions:
+  - postal code is NOT collected here - it moved to Step 12 (decided 3 Jul 2026).
+    The store still carries a legacy contact.postalCode field used only as a
+    Step 12 prefill fallback; no page writes it anymore (removal candidate)
+
+effects:
+  - email + phone prefill Step 12 and render on the Step 14 policyholder card
+  - email prefills the Step 9 save-and-email-quote input
+  - marketingChannels prefill Step 12's channel picker (duplication pending OD-3)
+  - Next triggers the first IDIT premium call - 2.5s holding overlay with rotating
+    educational tips, then routes to /step/9 (prototype-only simulation of the
+    IDIT POST)
+
+open-decisions: [OD-3]
+
+demo-autofill: Wei Liang / demo@bdi.sg / 91234567 / Email channel / PDPA ticked
+
+acceptance-criteria:
+  - "Given an invalid email or a mobile not starting 8/9, when Next is clicked, then the field errors and journey blocks"
+  - "Given PDPA unticked, when Next is clicked, then the consent error shows and journey blocks"
+  - "Given all valid, when Next is clicked, then the holding overlay shows before landing on /step/9"

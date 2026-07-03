@@ -8,7 +8,7 @@
  *  - Car make, model, year (dropdowns, prefilled from Step 3 — still editable
  *    in case the customer corrects something at the end of the journey).
  *  - Inline helper banner reminding the cover-type age limit (Comprehensive
- *    has no cap, TPO/TPFT caps at 15 years — KB #9).
+ *    has no cap, TPO/TPFT caps at 15 years — KB-9).
  *  - VRM input. If they don't have one yet, a cyan text link swaps in a
  *    Chassis Number field (OMP-85 decision: VRM XOR chassis required).
  *  - Current insurer (optional dropdown).
@@ -16,7 +16,7 @@
  *    Step 1 cover is TPO or TPFT, a warning callout flagging that financed
  *    cars usually require Comprehensive (task 2dd6edc2-ddee).
  *
- * Odometer is NOT collected on BD per KB #7 (DA-only). Engine number,
+ * Odometer is NOT collected on BD per KB-7 (DA-only). Engine number,
  * car colour, accident-claim date, and ownership are NOT collected here:
  * engine number is removed entirely, colour is post-quote, the others
  * live elsewhere in the journey.
@@ -181,7 +181,7 @@ function onVrmInput(v) { local.registrationNumber = (v || '').toUpperCase(); syn
 function onChassisInput(v) { local.chassisNumber = (v || '').toUpperCase(); sync() }
 
 // Helper banner is only shown for TPO/TPFT where the 15-year cap is a
-// real eligibility constraint (KB #9). Comprehensive has no age cap, so
+// real eligibility constraint (KB-9). Comprehensive has no age cap, so
 // the banner is hidden on comprehensive quotes.
 const helperText = computed(() =>
   restrictiveCover.value

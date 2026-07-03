@@ -60,7 +60,7 @@ const routes = [
     path: '/step/10.1',
     name: 'step-10-1-main-driver-confirm',
     component: () => import('../views/Step10_1MainDriverConfirm.vue'),
-    meta: { step: 10, group: 2, omp: 'OMP-NEW', title: 'Main Driver Confirmation' },
+    meta: { step: 10, group: 2, omp: 'OMP-992', title: 'Main Driver Confirmation' },
   },
   {
     path: '/step/10',

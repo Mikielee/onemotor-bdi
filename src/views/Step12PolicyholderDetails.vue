@@ -13,7 +13,7 @@
  *   - Email + Mobile pulled from Step 8 contact
  *   - NCD pulled from Step 7 driving history
  *   - Marketing channels pulled from Step 8 contact (decision pending —
- *     KB 98cd9339 hasn't landed, so we keep both Step 8 + Step 12 for now)
+ *     KB-98cd9339 hasn't landed, so we keep both Step 8 + Step 12 for now)
  *   - Full name + NRIC are still manual capture — never collected pre-Step 12
  *
  * Car details (registration, insurer, last claim, ownership) moved out of
@@ -500,7 +500,7 @@ register(() => {
 }
 
 /* Marketing channel cards — same component pattern as Step 8 but lives
-   here per Figma. Keep both in sync if KB 98cd9339 lands either way. */
+   here per Figma. Keep both in sync if KB-98cd9339 lands either way. */
 .channels-cards {
   display: flex;
   flex-direction: column;

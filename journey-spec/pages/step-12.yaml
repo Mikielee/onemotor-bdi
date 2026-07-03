@@ -1,0 +1,115 @@
+page: 12
+route: /step/12
+title: Policyholder Additional Details
+brand: BD
+omp: OMP-651
+figma:
+  canvas: "4962-3081"
+  mobile: "5281:1683"
+code: src/views/Step12PolicyholderDetails.vue
+kb: [KB-1, KB-4, KB-8, KB-98cd9339]
+footer: BdiQuoteFooter
+
+fields:
+  - id: fullName
+    label: Full name (as per NRIC)
+    store: policyholder.fullName
+    required: true
+    validation: non-empty
+    prefill: { from: mainDriver.name (Step 10.1), when: mainDriver.isPolicyholder }
+  - id: nric
+    label: NRIC/FIN
+    store: policyholder.nric
+    required: true
+    validation: full ICA checksum
+    prefill: { from: mainDriver.nric (Step 10.1), when: mainDriver.isPolicyholder }
+  - id: dob
+    label: Date of birth
+    store: policyholder.dob
+    required: true
+    prefill: { from: mainDriver.dob (Step 6), when: mainDriver.isPolicyholder }
+  - id: gender
+    label: Gender
+    store: policyholder.gender
+    required: true
+    prefill: { from: mainDriver.gender (Step 6), when: mainDriver.isPolicyholder }
+  - id: email
+    store: policyholder.email
+    required: true
+    validation: email regex
+    prefill: { from: contact.email (Step 8), always: true }
+  - id: phone
+    store: policyholder.phone
+    required: true
+    validation: SG mobile 8 digits starting 8/9
+    prefill: { from: contact.phone (Step 8), always: true }
+  - id: ncd
+    label: No Claim Discount (NCD) at renewal
+    store: policyholder.ncd
+    required: true
+    validation: 0-50 in 10s
+    prefill: { from: drivingHistory.ncd (Step 7), always: true }
+    notes: NCD attaches to policyholder (KB-4/KB-8)
+  - id: postalCode
+    label: Postal code
+    store: policyholder.address.postalCode
+    required: true
+    validation: 6 digits
+    notes: postal code lives HERE, not Step 8 (decided 3 Jul 2026). Lookup autofills
+      block + street + buildingName when the code is known (prototype stub for
+      OneMap; 078878 -> 10 Gopeng Street, Icon Residence). Unknown codes leave
+      address fields open for manual entry - never a block screen.
+  - id: block / street
+    store: policyholder.address.block / .street
+    required: false
+    notes: autofilled from postal lookup, editable
+  - id: unit
+    label: Unit number
+    store: policyholder.address.unit
+    required: true
+    validation: non-empty; always manual (never autofilled)
+  - id: buildingName
+    store: policyholder.address.buildingName
+    required: false
+    notes: autofilled where the lookup knows it, optional otherwise
+  - id: marketingChannels
+    store: policyholder.marketingChannels
+    required: false
+    prefill: { from: contact.marketingChannels (Step 8), always: true }
+    notes: duplication with Step 8 pending OD-3
+
+conditions:
+  - headline reads "Just a few details about Policyholder to get you covered" with
+    "Policyholder" underlined
+  - when: mainDriver.isPolicyholder = true
+    then: name, NRIC, DOB, gender prefill from the main driver so the customer
+      confirms instead of retyping
+  - when: mainDriver.isPolicyholder = false
+    then: those fields land empty for manual capture
+  - when: a valid 6-digit postal code is entered
+    then: address fields reveal; block/street/building autofill where known
+
+effects:
+  - IDIT contact create/update fires when Next is clicked on this page (post-quote)
+
+exceptions:
+  - "IDIT ValidateContact scenarios (29 Jun 2026 meeting, not yet in prototype):"
+  - "full match: proceed; primary fields + mobile locked"
+  - "primary match / secondary mismatch: prompt 'we found your record, some details
+     differ - update?'; yes pushes changes, no re-prompts until corrected or accepted"
+  - "primary mismatch (e.g. same NRIC, different email): HARD BLOCK; failing field
+     is never named (anti-scalping)"
+  - "not found: create new contact and proceed"
+  - "field tiers (draft, OD-6): primary = NRIC, email, full name, gender, DOB;
+     secondary = mobile (Policy Manager-only change), postal code"
+
+open-decisions: [OD-1, OD-3, OD-6]
+
+demo-autofill: postal 078878 (autofills 10 Gopeng Street + Icon Residence) + unit
+  41-21; identity fields arrive via the prefill chain
+
+acceptance-criteria:
+  - "Given main driver = policyholder, when Step 12 loads, then name, NRIC, DOB, gender are prefilled"
+  - "Given postal code 078878, then block, street, and building name autofill and unit stays manual"
+  - "Given an unknown valid postal code, then address fields open for manual entry with no block screen"
+  - "Given unit number empty, when Next is clicked, then the unit field errors and journey blocks"

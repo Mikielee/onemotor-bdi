@@ -1,4 +1,9 @@
 <script setup>
+/**
+ * Step 5 — Annual Distance (OMP-91).
+ * Figma canvas: 3949-703; band states: 4691-2315.
+ * Spec: journey-spec/pages/step-05.yaml. DLPL + odometer are DA-only (KB-7).
+ */
 import { computed, reactive } from 'vue'
 import StickyNext from '../components/StickyNext.vue'
 import FieldError from '../components/FieldError.vue'

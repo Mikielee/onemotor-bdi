@@ -1,0 +1,56 @@
+page: 14
+route: /step/14
+title: Policy Summary
+brand: BD
+omp: OMP-653
+figma:
+  canvas: null            # no Figma frame - designed in-prototype from the DA-side
+                          # layout, BD styling
+code: src/views/Step14PolicySummary.vue
+kb: [KB-11]
+footer: BdiQuoteFooter    # next-label "Payment", intercept-next -> /step/15
+
+fields:
+  - id: acceptedTerms
+    label: T&Cs + Policy Wording agreement
+    required: true
+    validation: must tick to proceed (local state, not persisted to store)
+  - id: acceptedDuty
+    label: Duty of disclosure
+    required: true
+  - id: acceptedUnderwriting
+    label: Underwriting declaration
+    required: true
+
+conditions:
+  - all three disclosure gates ticked -> "Payment" CTA enables; otherwise clicking
+    reveals nothing (button visually blocked)
+  - "display sections: policy details (quote ID, cover type, duration, promo);
+    car details (make, model, year, VRM, usage, off-peak, mileage band)"
+  - when: mainDriver.isPolicyholder = true
+    then: one combined "Policyholder & Main driver" card with gender + marital
+      folded in; driving-history card titled "Driving history"
+  - when: mainDriver.isPolicyholder = false
+    then: separate policyholder card and main-driver card (name, masked NRIC, DOB,
+      gender, marital); driving-history block titled "Main driver"
+  - NRIC always masked to last 4 (····1234) - safe to read on a shared screen
+  - named drivers list name + DOB only (that is all we collect for them)
+  - plan cards (Household driver plan / Authorised Driver Plan) render only when
+    the customer actually has them; benefits card only when benefits selected
+
+effects:
+  - "pencil routing: policy details -> Step 1; car details -> Step 13; policyholder
+    -> Step 12; driving history -> Step 7 (combined) or Step 10.1 (separate main
+    driver); named drivers -> Step 10. Inline-edit alternative pending OD-2"
+  - mandatory info captured across the journey must all be visible here before the
+    customer agrees to the disclosures (NRIC, address, contact, driving history)
+
+open-decisions: [OD-1, OD-2, OD-5, OD-9]
+
+demo-autofill: ticks all three disclosure gates
+
+acceptance-criteria:
+  - "Given any disclosure unticked, then the Payment CTA stays blocked"
+  - "Given main driver = policyholder, then one combined person card renders with gender + marital"
+  - "Given the summary renders, then the NRIC shows only its last 4 characters"
+  - "Given all three ticked, when Payment is clicked, then route to /step/15"

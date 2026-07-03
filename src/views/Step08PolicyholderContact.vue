@@ -1,4 +1,11 @@
 <script setup>
+/**
+ * Step 8 — Policyholder Contact (OMP-94).
+ * Figma canvas: 3997-7575; desktop channels layout: 3997:7960.
+ * Spec: journey-spec/pages/step-08.yaml. No postal code here — moved to
+ * Step 12 (3 Jul 2026). Marketing prefs duplication with Step 12 pending
+ * OD-3 / KB-98cd9339.
+ */
 import { computed, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import InputText from 'primevue/inputtext'

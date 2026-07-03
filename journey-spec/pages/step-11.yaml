@@ -1,0 +1,38 @@
+page: 11
+route: /step/11
+title: Optional Benefits
+brand: BD
+omp: OMP-362
+figma:
+  canvas: "4015-974"
+  collapsed: "5584:1218"
+code: src/views/Step11OptionalBenefits.vue
+footer: BdiQuoteFooter
+
+fields:
+  - id: optionalBenefits
+    label: Want extra coverage?
+    store: optionalBenefits
+    required: false
+    validation: "multi-toggle across 10 add-ons: ncd-protector*, roadside-assistance*,
+      any-workshop, new-for-old, medical-expenses, overseas-emergency,
+      personal-accident, transport-allowance, windscreen-cover, ev-addon
+      (* = Recommended badge)"
+    notes: prices flat $8.11 placeholder (prototype-only; real prices from IDIT per
+      toggle). Top 3 shown by default; rest behind "Show more optional benefits".
+
+conditions:
+  - when: personal-accident is toggled on
+    then: pricing shows a separate "Medical expenses $80" line (legacy Step 9 row)
+      instead of the flat benefit price
+
+effects:
+  - each non-PA benefit adds $8.11; benefits list individually in the sticky-bar
+    breakdown and on the Step 14 selected-benefits card
+  - page has no validation gate - Next always enabled (all benefits optional)
+
+demo-autofill: NCD Protector + 24-hr Roadside + Any Workshop
+
+acceptance-criteria:
+  - "Given no benefits selected, when Next is clicked, then the journey proceeds (nothing required)"
+  - "Given a benefit toggles on, then the sticky-bar running total updates immediately and the benefit appears as its own breakdown row"

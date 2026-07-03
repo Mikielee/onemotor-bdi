@@ -1,0 +1,39 @@
+page: 2
+route: /step/2
+title: Cover Start Date
+brand: BD
+omp: OMP-88
+figma:
+  canvas: "3888-417"
+code: src/views/Step02CoverStartDate.vue
+kb: [KB-f1898394]
+footer: StickyNext
+
+fields:
+  - id: coverStartDate
+    label: Policy start date
+    store: coverStartDate
+    required: true
+    validation: date >= today
+  - id: coverEndDate
+    label: Policy end date
+    store: coverEndDate
+    required: true
+    validation: between start + 7 months and start + 18 months (KB-f1898394)
+    prefill: { from: coverStartDate + 12 months, when: end date not yet set }
+    notes: disabled until start date picked
+
+conditions:
+  - when: start date changes and an end date already exists
+    then: end date is clamped into the new [start+7mo, start+18mo] window
+
+effects:
+  - cover term 7-18 months is why premium display must never claim "per year"
+    (KB-11) — the term is not annual by definition
+
+demo-autofill: start = today + 7 days, end = start + 12 months
+
+acceptance-criteria:
+  - "Given no start date, when Next is clicked, then start-date error shows and journey blocks"
+  - "Given a start date is picked, then end date auto-populates to start + 12 months and becomes editable"
+  - "Given an end date outside [start+7mo, start+18mo], then the date picker prevents selection (min/max bounds)"

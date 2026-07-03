@@ -1,0 +1,36 @@
+page: 5
+route: /step/5
+title: Annual Distance
+brand: BD
+omp: OMP-91
+figma:
+  canvas: "3949-703"
+  states: "4691-2315"
+code: src/views/Step05AnnualDistance.vue
+kb: [KB-7]
+footer: StickyNext
+
+fields:
+  - id: annualDistance
+    label: How far do you drive in a year?
+    store: annualDistance
+    required: true
+    validation: one of under-8000 | 8000-12000 | 12001-18000 | over-18000
+    notes: 2x2 grid of band cards; bands cover 0-infinity with no gaps
+
+conditions:
+  - brand-gate: Drive Less Pay Less opt-in and odometer capture are DA-only (KB-7)
+    and must NOT appear on BD. The store carries a vestigial driveLess field that
+    no BD page ever sets (removal candidate, or reserved for the DA spec)
+
+effects:
+  - band renders as "Annual mileage" on Step 14 car-details card
+
+notes:
+  - info callout gives the 9,000 km/year anchor example (15 km daily commute)
+
+demo-autofill: 8,000-12,000 km band
+
+acceptance-criteria:
+  - "Given no band selected, when Next is clicked, then band error shows and journey blocks"
+  - "Given the BD brand, then no Drive Less Pay Less toggle or odometer capture is present (KB-7)"

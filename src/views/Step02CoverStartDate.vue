@@ -1,4 +1,9 @@
 <script setup>
+/**
+ * Step 2 — Cover Start Date (OMP-88).
+ * Figma canvas: 3888-417.
+ * Spec: journey-spec/pages/step-02.yaml
+ */
 import { computed } from 'vue'
 import BdiDateField from '../components/BdiDateField.vue'
 import StickyNext from '../components/StickyNext.vue'

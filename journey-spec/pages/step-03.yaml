@@ -1,0 +1,49 @@
+page: 3
+route: /step/3
+title: Year, Make & Model
+brand: BD
+omp: OMP-89
+figma:
+  canvas: "3936-3158"
+code: src/views/Step03YearMakeModel.vue
+kb: [KB-9]
+footer: StickyNext
+
+fields:
+  - id: carYear
+    label: Year
+    store: carYear
+    required: true
+    validation: within allowed range (see conditions)
+  - id: carMake
+    label: Car brand
+    store: carMake
+    required: true
+    notes: grouped dropdown (Popular brands / All brands), searchable; disabled until year picked
+  - id: carModel
+    label: Car model
+    store: carModel
+    required: true
+    notes: options filtered by make; disabled until make picked
+
+conditions:
+  - when: coverType is third-party or third-party-fire-theft
+    then: year options cap at current_year - 15 (KB-9)
+  - when: coverType is comprehensive
+    then: year options span 30 years
+  - when: cover type switches to third-party and the picked year is now out of range
+    then: year, make, and model are all cleared automatically
+  - when: make changes
+    then: model resets to null
+
+effects:
+  - carYear/carMake/carModel prefill Step 13 (same car, root store is the single
+    source of truth; Step 13 edits write back here)
+  - carLine renders on Step 9 quote meta card and Step 17 confirmation
+
+demo-autofill: 2022 Toyota Corolla Altis
+
+acceptance-criteria:
+  - "Given cover type is third-party, when the year dropdown opens, then no year older than 15 years is offered (KB-9)"
+  - "Given year, make, model picked, when Next is clicked, then route to /step/4"
+  - "Given the make changes after a model was picked, then the model clears"

@@ -1,0 +1,38 @@
+page: 17
+route: /step/17
+title: Confirmation
+brand: BD
+omp: OMP-656
+figma:
+  canvas: null            # Figma frame empty (🔴 marker) - designed in-prototype
+code: src/views/Step17Confirmation.vue
+kb: [KB-11]
+footer: none              # page owns its own CTA stack
+
+fields: []                # display-only page; no form inputs
+
+conditions:
+  - all three payment paths converge here (PayNow, single-card gateway,
+    instalment-card gateway)
+  - "hero: green check + 'You're covered, <first name>' + cover type + start date
+    + documents-sent-to-email line"
+  - "policy mini-card: policy number, vehicle, cover period, paid amount + cadence
+    (KB-11 framing: 'paid in full' / 'per month'), payment method (PayNow or
+    Credit card · <bank>), issued timestamp"
+  - "what's next: check email / save claims line +65 6221 8688 / NCD growth note"
+
+effects:
+  - "Download policy PDF: prototype no-op with an alert (production hits the
+    policy-doc generator)"
+  - "Back to home routes to /step/1"
+
+notes:
+  - policy number BDI-<yyyymmdd>-<5 rand> generated on mount - prototype
+    placeholder, see OD-5
+  - first name derived from policyholder.fullName (first token)
+
+open-decisions: [OD-5]
+
+acceptance-criteria:
+  - "Given payment completes on any path, then this page shows policy number, vehicle, cover period, amount, and method"
+  - "Given the paid line renders, then cadence framing follows KB-11 (never 'per year')"

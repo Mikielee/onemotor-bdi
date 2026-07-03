@@ -1,6 +1,8 @@
 <script setup>
 /**
- * Step 14 — Review your custom cover (Policy Summary).
+ * Step 14 — Review your custom cover (Policy Summary, OMP-653).
+ * No Figma frame — Notion story has no Page Figma link; designed in-prototype.
+ * Spec: journey-spec/pages/step-14.yaml. Inline-edit decision pending OD-2.
  * Rebuilt to match the DA-side layout (cards grouped by topic, each with
  * an edit affordance, driver rows, plan cards with green-check status,
  * selected-benefits list) but in BD styling — Museo Sans, BD red brand,
@@ -113,7 +115,7 @@ const policyDuration = computed(() => {
 
 const promoApplied = computed(() => quote.quoteSelection?.appliedPromo || null)
 
-// Car-details section. BD-only — no odometer per KB #7. Mileage = annual
+// Car-details section. BD-only — no odometer per KB-7. Mileage = annual
 // distance band from Step 5.
 const usageLabel = computed(() => {
   const u = quote.carUsage?.usage

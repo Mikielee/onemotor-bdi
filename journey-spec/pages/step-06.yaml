@@ -1,0 +1,52 @@
+page: 6
+route: /step/6
+title: Main Driver
+brand: BD
+omp: OMP-92
+figma:
+  canvas: "3994-19086"
+code: src/views/Step06MainDriver.vue
+kb: [KB-1]
+footer: StickyNext
+
+fields:
+  - id: isPolicyholder
+    label: Is the main driver also the policyholder?
+    store: mainDriver.isPolicyholder
+    required: true
+    validation: boolean
+    notes: THE branch driver for the whole downstream prefill chain
+  - id: gender
+    label: Gender
+    store: mainDriver.gender
+    required: true
+    validation: male | female
+  - id: maritalStatus
+    label: Marital status
+    store: mainDriver.maritalStatus
+    required: true
+    validation: single | married | divorced | widowed
+  - id: dob
+    label: Date of birth
+    store: mainDriver.dob
+    required: true
+    validation: date <= today
+
+effects:
+  - isPolicyholder = true means Step 12 prefills fullName, nric, dob, gender from
+    the main driver (captured here + Step 10.1) and Step 14 shows a combined
+    "Policyholder & Main driver" card
+  - isPolicyholder = false means Step 12 lands empty for manual capture and Step 14
+    shows separate policyholder and main-driver cards
+  - dob/gender/maritalStatus prefill Step 10.1 as editable confirmations
+
+notes:
+  - KB-1 mandates Full Name + NRIC for the main driver; those are deliberately
+    deferred to Step 10.1 (post-quote) so the pre-quote flow stays light
+  - main-driver COM is asked at Step 7, not here
+
+demo-autofill: policyholder Yes, Male, Married, DOB 15 May 1990
+
+acceptance-criteria:
+  - "Given any field missing, when Next is clicked, then that field errors and journey blocks"
+  - "Given isPolicyholder = true, when the customer later reaches Step 12, then name, NRIC, DOB, gender arrive prefilled"

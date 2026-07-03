@@ -1,0 +1,56 @@
+page: 15
+route: /step/15
+title: Payment Options
+brand: BD
+omp: OMP-654
+figma:
+  canvas: "5089-3139"
+  default: "5584:9517"
+  instalment: "5584:9706"
+code: src/views/Step15Payment.vue
+kb: [KB-2, KB-11]
+footer: BdiQuoteFooter    # next-label "Pay", intercept-next
+
+fields:
+  - id: paymentTerm
+    label: Select your payment option
+    store: quoteSelection.paymentTerm
+    required: true
+    validation: single (Save 3% badge) | instalment
+    prefill: { from: Step 9 selection, always: true }
+    notes: changing here writes back to the store so Step 9 and the sticky bar stay
+      in sync
+  - id: paymentMethod
+    label: Payment method
+    store: payment.method
+    required: true
+    validation: single -> card | paynow; instalment -> card only
+  - id: bank
+    store: payment.bank
+    required: only when instalment
+    validation: uob | dbs | ocbc (covers ~95% of SG car instalment volume per
+      OMP-654 brief); picking a bank auto-locks method = card
+
+conditions:
+  - when: paymentTerm switches to instalment while paynow was selected
+    then: paymentMethod clears (instalment is card-only)
+  - when: paymentTerm switches back to single
+    then: bank clears
+
+effects:
+  - "Pay routes: paynow -> /step/16 (PayNow QR); card -> /payment/gateway (mock)"
+  - premium figure in the sticky bar follows KB-11 framing (Total / per month)
+
+exceptions:
+  - "KB-2/OD-8: instalment should eventually be one button PER BANK routing to that
+    bank's IPP page (redirect not handled by the standard gateway). Current bank
+    picker routes everything to the generic mock gateway"
+
+open-decisions: [OD-1, OD-8]
+
+demo-autofill: Single + Credit card
+
+acceptance-criteria:
+  - "Given instalment is selected, then PayNow is not offered and a bank pick is required"
+  - "Given no method (or instalment with no bank), when Pay is clicked, then the journey blocks"
+  - "Given PayNow selected, when Pay is clicked, then route to /step/16; given card, then route to /payment/gateway"

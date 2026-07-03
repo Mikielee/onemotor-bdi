@@ -1,0 +1,67 @@
+page: 9
+route: /step/9
+title: Your Quote
+brand: BD
+omp: OMP-305
+figma:
+  canvas: "4189-8932"
+  coverage-expanded: "4148-3290"
+  payment-toggle: "4719-3438"
+  sticky-footer: "4754-5410"
+code: src/views/Step09YourQuote.vue
+kb: [KB-11, KB-f1898394]
+footer: inline            # page owns its own sticky bar (same behavior as BdiQuoteFooter)
+
+fields:
+  - id: paymentTerm
+    label: Single / Instalment
+    store: quoteSelection.paymentTerm
+    required: true
+    validation: single | instalment (single default; single carries 3% discount)
+    notes: naming per KB-f1898394 - NOT annual/monthly, cover term flexes 7-18 months
+  - id: excess
+    label: Choose your excess
+    store: quoteSelection.excess
+    required: true
+    validation: 0 | 500 | 600 (default) | 800 | 1000 | 1500 with premium deltas
+      +50/+10/0/-20/-30/-50; deltas display signed amount only, no "/yr" (KB-11)
+  - id: promoCode
+    label: Enter Promo Code
+    store: quoteSelection.promoCode + quoteSelection.appliedPromo
+    required: false
+    validation: TEST is the only valid mock code -> $50 eCapitavoucher (gift, no
+      premium impact); invalid codes show inline error
+    notes: appliedPromo object persists to the store so Steps 10+ sticky bar and
+      Step 14 can render it
+
+conditions:
+  - when: paymentTerm = single
+    then: hero shows total with "Total" unit and "Single payment 3% discount -
+      Included" row (KB-11 - never "per year")
+  - when: paymentTerm = instalment
+    then: hero shows monthly figure with "per month" unit and a Total line below
+  - when: promo applied
+    then: input swaps to the applied-promo card with remove (trash) affordance
+
+effects:
+  - paymentTerm + excess feed useQuotePricing - every premium surface (hero card,
+    sticky bars, Step 14, Step 17) reads from that single composable
+  - Buy now routes to /step/10.1 (NOT /step/10 - main-driver confirmation sits
+    between)
+
+notes:
+  - save-and-email quote has 3 states (idle button -> split-pill email edit ->
+    sent confirmation) prefilling contact.email
+  - coverage table shows 5 rows collapsed, 11 expanded
+  - "Quote ID hardcoded P11254149R00 - OD-5"
+  - GST is a breakdown line item only; no "(incl. GST)" parenthetical on the
+    headline (KB-11); sticky expanded breakdown mirrors the hero card rows
+
+open-decisions: [OD-5]
+
+demo-autofill: Single, $600 excess, promo TEST applied
+
+acceptance-criteria:
+  - "Given the page loads, then the premium never carries per-year framing (KB-11)"
+  - "Given promo TEST applied, when the customer navigates to Step 10+, then the sticky-bar breakdown still shows the promo row"
+  - "Given Buy now is clicked, then route to /step/10.1"

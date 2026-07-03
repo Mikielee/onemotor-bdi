@@ -1,0 +1,36 @@
+page: 1
+route: /step/1
+title: Cover Type
+brand: BD
+omp: OMP-87
+figma:
+  canvas: "3902-1286"
+  error-state: "4691-2"
+code: src/views/Step01CoverType.vue
+kb: [KB-9]
+footer: StickyNext
+
+fields:
+  - id: coverType
+    label: Which cover do you need?
+    store: coverType
+    required: true
+    validation: one of comprehensive | third-party-fire-theft | third-party
+    notes: radio cards with title + description; green radio when selected
+
+effects:
+  - coverType third-party or third-party-fire-theft caps the Step 3 year dropdown
+    at current_year - 15 (KB-9) and shows the 15-year helper banner on Step 13
+  - coverType third-party/TPFT + financing = yes on Step 13 triggers the
+    "financiers usually require Comprehensive" warning callout
+
+exceptions:
+  - clicking Next with no selection reveals red outline on ALL option cards
+    (error state per Figma 4691-2) and blocks navigation
+
+demo-autofill: selects Comprehensive
+
+acceptance-criteria:
+  - "Given no selection, when Next is clicked, then all cards outline red and the journey does not advance"
+  - "Given a cover type is selected, when Next is clicked, then route to /step/2"
+  - "Given cover type later switches Comprehensive -> third-party with a >15-year-old car picked at Step 3, then Step 3 clears year, make, and model (KB-9)"

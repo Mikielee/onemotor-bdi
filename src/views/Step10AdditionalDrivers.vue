@@ -16,7 +16,7 @@
  * Years of valid driving licence, At-fault (0-4+), Not-at-fault (0-5+).
  *
  * No NCD or Certificate of Merit per driver — NCD attaches to the
- * policyholder (KB #4); CoM is asked at Step 7 for main + named drivers.
+ * policyholder (KB-4); CoM is asked at Step 7 for main + named drivers.
  */
 import { computed, reactive } from 'vue'
 import InputText from 'primevue/inputtext'

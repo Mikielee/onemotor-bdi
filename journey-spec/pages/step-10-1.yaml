@@ -1,0 +1,73 @@
+page: 10.1
+route: /step/10.1
+title: Main Driver Confirmation
+brand: BD
+omp: OMP-992              # "Step 10.1 - OMP-992 - Main Driver Additional Details"
+figma:
+  canvas: "5269-3520"
+code: src/views/Step10_1MainDriverConfirm.vue
+kb: [KB-1]
+footer: BdiQuoteFooter    # intercept-next: Next routes to /step/10, Back to /step/9
+
+fields:
+  - id: name
+    label: Full name (as per NRIC)
+    store: mainDriver.name
+    required: true
+    validation: non-empty
+    notes: NEW capture - not collected anywhere before this step
+  - id: nric
+    label: NRIC/FIN
+    store: mainDriver.nric
+    required: true
+    validation: full ICA checksum (S/T/F/G/M prefixes; M-series flipped index)
+    notes: NEW capture; auto-uppercased
+  - id: dob
+    store: mainDriver.dob
+    required: true
+    prefill: { from: mainDriver.dob (Step 6), editable: true }
+  - id: gender
+    store: mainDriver.gender
+    required: true
+    prefill: { from: mainDriver.gender (Step 6), editable: true }
+  - id: maritalStatus
+    store: mainDriver.maritalStatus
+    required: true
+    prefill: { from: mainDriver.maritalStatus (Step 6), editable: true }
+  - id: yearsLicensed
+    store: drivingHistory.yearsLicensed
+    required: true
+    prefill: { from: Step 7, editable: true }
+  - id: atFault
+    store: drivingHistory.atFaultClaims
+    required: true
+    prefill: { from: Step 7, editable: true }
+  - id: notAtFault
+    store: drivingHistory.notAtFaultClaims
+    required: true
+    prefill: { from: Step 7, editable: true }
+  - id: certOfMerit
+    store: drivingHistory.certificateOfMerit
+    required: true
+    prefill: { from: Step 7, editable: true }
+
+effects:
+  - name + nric feed the Step 12 prefill when mainDriver.isPolicyholder = true and
+    the Step 14 main-driver card when they differ
+  - edits to the Step 6/7 prefilled fields write BACK to the store (single source
+    of truth) - Step 14's driving-history card reflects edits made here
+
+notes:
+  - purpose - closes the KB-1 gap (main-driver Full Name + NRIC are IDIT-mandatory)
+    without weighing down the pre-quote flow; sits between quote acceptance and
+    additional drivers
+  - Step 14's main-driver pencil routes here (not Step 6) because this page holds
+    the full identity set
+
+demo-autofill: Tan Wei Liang / S8945678I (fills only the 2 new fields; rest arrive
+  via the prefill chain)
+
+acceptance-criteria:
+  - "Given the page loads after Steps 6-7, then DOB, gender, marital, licence years, AF, NAF, CoM arrive prefilled and editable"
+  - "Given an NRIC that fails the ICA checksum, when Next is clicked, then the NRIC field errors and journey blocks"
+  - "Given all valid, when Next is clicked, then route to /step/10 (not /step/11)"

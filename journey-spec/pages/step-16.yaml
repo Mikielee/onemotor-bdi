@@ -1,0 +1,38 @@
+page: 16
+route: /step/16
+title: PayNow QR
+brand: BD
+omp: OMP-655
+figma:
+  canvas: "5089-4302"
+  mobile: "5089:4637"
+code: src/views/Step16PayNowQR.vue
+footer: none              # page owns its own CTA stack
+
+fields: []                # display-only page; no form inputs
+
+conditions:
+  - only reachable when Step 15 method = paynow (card paths go through the gateway)
+  - "displays: PayNow logo, QR code, amount (S$ prefixed), payment reference
+    (PN<yyyymmdd>-<6 alphanumerics>, generated once on mount), payee, 15-minute
+    expiry timestamp"
+  - "how-to-pay steps (save QR -> bank app -> scan -> confirm) listed below the QR"
+
+effects:
+  - "Confirm payment routes to /step/17 - trust-based in the prototype (no webhook);
+    real flow confirms via the payment provider's callback"
+  - "Change payment method routes back to /step/15"
+  - "Save QR code downloads the QR image"
+
+notes:
+  - QR payload is a demo string (prototype-only); production receives an
+    EMV-formatted PayNow string from the payment provider
+  - QR image served by api.qrserver.com (prototype-only; swap before launch)
+  - reference format + expiry window are prototype placeholders - see OD-5
+
+open-decisions: [OD-5]
+
+acceptance-criteria:
+  - "Given Step 15 method = paynow, when Pay is clicked, then this page renders the QR, amount, reference, and expiry"
+  - "Given Confirm payment is clicked, then route to /step/17"
+  - "Given Change payment method is clicked, then route back to /step/15"

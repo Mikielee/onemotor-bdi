@@ -1,4 +1,9 @@
 <script setup>
+/**
+ * Step 3 — Year, Make & Model (OMP-89).
+ * Figma canvas: 3936-3158.
+ * Spec: journey-spec/pages/step-03.yaml
+ */
 import { computed, watch } from 'vue'
 import Select from 'primevue/select'
 import StickyNext from '../components/StickyNext.vue'

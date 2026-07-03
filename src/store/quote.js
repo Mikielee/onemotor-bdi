@@ -42,7 +42,7 @@ const state = reactive({
   quoteSelection: {
     // Single = pay whole cover term up front, gets 3% discount.
     // Instalment = pay monthly, no discount. Renamed from 'annual'/'monthly'
-    // because cover term flexes 7–18 months (KB f1898394, Sprint Review 12 Jun 2026).
+    // because cover term flexes 7–18 months (KB-f1898394, Sprint Review 12 Jun 2026).
     paymentTerm: 'single',
     excess: 600,
     promoCode: '',
@@ -69,7 +69,7 @@ const state = reactive({
       registrationNumber: '',
       currentInsurer: '',
       accidentClaimDate: '',   // MM/YYYY
-      ownership: '',           // 'private' | 'company' — odometer is DA-only per KB #7
+      ownership: '',           // 'private' | 'company' — odometer is DA-only per KB-7
     },
   },
 })

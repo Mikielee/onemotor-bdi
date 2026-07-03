@@ -4,6 +4,56 @@ Reverse-chronological log of substantive changes made to the prototype. Each ent
 
 ---
 
+## 2026-07-03 — Journey spec + catch-up entry for the June build-out (Steps 10.1–17)
+
+### Journey spec introduced
+
+New `journey-spec/` directory: one YAML contract per page (fields, validations,
+prefill chains, conditions, exceptions, ACs), an open-decision registry
+(`decisions.yaml`, OD-1..OD-9), and a KB id registry (`kb-registry.md`). This is
+now the traceability layer between the Notion KB, Figma, and this codebase.
+Rule going forward: **any change to fields/validations/routing in a view updates
+its spec file in the same commit.** See `journey-spec/README.md`.
+
+Alongside: Figma canvas refs added to the headers of Steps 1–8 (pulled from the
+Notion story rows) and Step 14 (confirmed no Figma frame); KB ids in comments
+canonicalized (`KB #7` → `KB-7`, `KB f1898394` → `KB-f1898394`); Step 10.1's
+router meta placeholder `OMP-NEW` resolved to the real story **OMP-992**.
+
+### Catch-up: what shipped between 2026-06-02 and 2026-07-03 (previously unlogged)
+
+- **Step 9 — Your Quote (OMP-305)**: hero card with Single/Instalment toggle,
+  excess picker with premium deltas, promo code (TEST → $50 eCapitavoucher),
+  coverage table, save-and-email quote (3 states), inline expandable sticky bar.
+  Premium framing per KB-11 (never "per year"). Figma 4189-8932 + 4148-3290.
+- **Step 10.1 — Main Driver Confirmation (OMP-992, NEW page)**: captures main
+  driver Full name + NRIC (the KB-1 gap), re-presents Step 6/7 answers as
+  editable confirmations. Sits between Step 9 and Step 10; Buy now routes here.
+  Figma 5269-3520.
+- **Step 12 — Policyholder Details (OMP-651)**: full prefill chain when main
+  driver = policyholder (name/NRIC/DOB/gender + contact + NCD); postal-code
+  address autofill (block/street/building, unit manual). Postal code moved here
+  from Step 8. Figma 4962-3081 / 5281:1683.
+- **Step 13 — Vehicle Details (OMP-652)**: make/model/year prefilled from Step 3
+  (root store single source of truth), VRM XOR chassis, optional current insurer,
+  financing branch with TPO/TPFT warning. No odometer per KB-7. Figma 2131-1607.
+- **Step 14 — Policy Summary (OMP-653)**: review cards showing all mandatory
+  captured info (masked NRIC), three disclosure gates before the Payment CTA.
+  No Figma frame — designed in-prototype from the DA-side layout.
+- **Step 15 — Payment (OMP-654)**: Single (card/PayNow) vs Instalment (card +
+  bank pick). Figma 5089-3139.
+- **Step 16 — PayNow QR (OMP-655)** + **Step 17 — Confirmation (OMP-656)** +
+  mock `/payment/gateway`. Step 17 designed in-prototype (Figma frame empty).
+- **Sticky bar (BdiQuoteFooter + Step 9 inline)**: circular 40px notch per Figma
+  5269-3520, individual benefit rows + promo row in the breakdown, and the
+  three-piece viewport-bottom docking fix (flex-fill `.step`, grow spacer,
+  `position: sticky`).
+- **Demo autofill**: header "Car Insurance" chip fills the current page with a
+  consistent valid persona on every step (see `useDemoAutofill.js`).
+- **Docs**: `ARCHITECT.md` added (presenter-ready architecture walkthrough).
+
+---
+
 ## 2026-06-02 — Vercel review pass: global validation, date field, design-system corrections, money formatting
 
 Reviewer feedback against the live Vercel build (`onemotor-bdi-primevue.vercel.app`) drove a sweep of cross-cutting fixes. Each section below tracks one user-raised comment from the review and the global treatment it received.

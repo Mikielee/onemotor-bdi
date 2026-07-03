@@ -1,0 +1,50 @@
+page: 4
+route: /step/4
+title: Car Usage
+brand: BD
+omp: OMP-90
+figma:
+  canvas: "3983-1768"
+code: src/views/Step04CarUsage.vue
+kb: [KB-10]
+footer: StickyNext
+
+fields:
+  - id: usage
+    label: How do you use your car?
+    store: carUsage.usage
+    required: true
+    validation: private-only | private-business
+  - id: commute
+    label: Do you use this car for any part of your commute to work or school?
+    store: carUsage.commute
+    required: only when usage = private-only
+    validation: regular | none
+  - id: offPeak
+    label: Is this an off-peak car?
+    store: carUsage.offPeak
+    required: true
+    validation: boolean
+
+conditions:
+  - when: usage = private-only
+    then: commute question (Q2) is shown (KB-10)
+  - when: usage = private-business
+    then: Q2 is skipped entirely and any prior commute answer is cleared;
+      user goes straight to Q3 off-peak (KB-10)
+  - when: usage switches private-business -> private-only
+    then: Q2 re-asks because the prior answer was cleared
+  - when: any Q1 answer is given
+    then: "disclaimer card shows: we do not cover ride hailing"
+  - when: usage = private-business OR commute answered
+    then: Q3 off-peak reveals
+
+effects:
+  - usage + offPeak render on Step 14 car-details card
+
+demo-autofill: Private only / Regular commuting / off-peak No
+
+acceptance-criteria:
+  - "Given usage = private-and-business, then the commute question never shows and the stored commute answer is null (KB-10)"
+  - "Given usage = private-only and no commute answer, when Next is clicked, then commute error shows and journey blocks"
+  - "Given any usage answer, then the ride-hailing disclaimer is visible"

@@ -1,0 +1,51 @@
+page: gateway             # outside the step counter
+route: /payment/gateway
+title: Secure Payment (mock gateway)
+brand: BD
+omp: null                 # no story - prototype-only stand-in for the hosted
+                          # Stripe/Adyen/2C2P page
+code: src/views/PaymentGateway.vue
+footer: none
+
+fields:
+  - id: number
+    label: Card number
+    required: true
+    validation: 16 digits, auto-grouped in 4s (format-only, no Luhn - prototype)
+  - id: expiry
+    label: Expiry
+    required: true
+    validation: MM/YY, auto-slash
+  - id: cvv
+    label: CVV
+    required: true
+    validation: 3-4 digits
+  - id: name
+    label: Cardholder name
+    required: true
+    validation: non-empty
+
+conditions:
+  - reached from Step 15 when method = card (single or instalment)
+  - header shows the charge amount + cadence + bank (when instalment)
+
+effects:
+  - "Pay: 2.5s processing overlay -> /step/17 (always succeeds - prototype)"
+  - "Cancel: routes back to /step/15"
+
+notes:
+  - prototype-only. The real flow redirects to the provider's hosted page and
+    returns via webhook/callback; nothing here ships to production
+  - no failure path is simulated (declined card, timeout) - add if stakeholders
+    want to demo error handling
+  - OD-1 (active-proposal cross-check at point of payment) would land at this
+    boundary in the real flow
+
+open-decisions: [OD-1, OD-8]
+
+demo-autofill: card 4242 4242 4242 + last 4 of policyholder NRIC, cardholder =
+  policyholder name uppercased, 12/29, CVV 123
+
+acceptance-criteria:
+  - "Given any field invalid, when Pay is clicked, then per-field errors show and no navigation happens"
+  - "Given all valid, when Pay is clicked, then the processing overlay shows ~2.5s and routes to /step/17"
