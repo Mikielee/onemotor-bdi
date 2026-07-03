@@ -21,6 +21,7 @@ worse than no spec. The same-commit rule is also recorded in the project CLAUDE.
 | `pages/step-NN.yaml` | One spec per journey page (17 steps + step-10-1 + payment-gateway) |
 | `decisions.yaml` | Open-decision registry (OD-n ids). Pending business calls + what each affects |
 | `kb-registry.md` | Canonical KB ids → Notion pages → citing code files |
+| `components.yaml` | Master component registry — cross-brand (BD/DA) contract per shared component: master behavior, per-brand skins, intentional divergences. Read before building or restyling any shared component on either prototype |
 
 ## Page spec schema
 

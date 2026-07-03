@@ -31,12 +31,19 @@ const { trigger } = useDemoAutofill()
 </template>
 
 <style scoped>
+/* Header — master component contract (journey-spec/components.yaml):
+   84px tall, 17px/16px padding, logo in a contained ~72x50 box, chip +
+   burger right-aligned with a 16px gap. Same geometry as DA's .da-header
+   so the two brands stay consistent; only the brand marks differ.
+   The 17px vertical padding also keeps the logo clear of the phone
+   frame's 28px corner radius, which was clipping the "It pays to
+   choose" tagline when the logo bled to the header's top edge. */
 .bdi-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   height: 84px;
-  padding: 0 16px;
+  padding: 17px 16px;
   background: #fff;
   border-bottom: 1px solid var(--bdi-grey-200);
 }
@@ -49,14 +56,15 @@ const { trigger } = useDemoAutofill()
 }
 .bdi-logo img {
   display: block;
-  height: 56px;
-  width: auto;
+  width: 72px;
+  height: 50px;
+  object-fit: contain;
 }
 
 .bdi-header-right {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 16px;
 }
 
 .bdi-product-chip {

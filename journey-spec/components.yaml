@@ -1,0 +1,114 @@
+# Master component registry — the cross-brand contract.
+#
+# One entry per shared journey component. Each defines the MASTER behavior
+# (what both brands must do identically), then the per-brand skin/behavior
+# differences that are INTENTIONAL. Anything not listed as a difference is
+# expected to match — a mismatch is a parity bug, not a brand choice.
+#
+# Born 3 Jul 2026 after the BD header clipped its logo while DA's rendered
+# fine: same component, two ad-hoc implementations, no contract. Read this
+# BEFORE building or restyling any shared component on either prototype.
+#
+# Source repos:
+#   BD: 06_Prototype/bdi-primevue   DA: 06_Prototype/da-primevue
+
+- component: app-header
+  master:
+    - 84px tall, white bar, 1px bottom divider, 17px/16px padding
+    - logo left in a contained box (~72x50, object-fit contain), links home
+    - right side = product chip + burger menu, 16px gap
+    - product chip doubles as the demo-autofill trigger on both brands
+  bd: { file: src/components/AppHeader.vue, skin: BD logo PNG (71x56 incl. tagline), grey chip with red car icon }
+  da: { file: src/components/AppHeader.vue, skin: DA roundel (200x141 PNG), translucent yellow chip, no icon }
+  notes: BD logo previously bled to the header top edge and the phone frame's
+    28px corner radius clipped the tagline - fixed 3 Jul 2026 to this contract.
+
+- component: step-indicator
+  master:
+    - 4 groups (Your Car / Your Details / Your Quote / Finalise & Pay)
+    - active group highlighted in brand accent; completed groups filled;
+      future groups greyed
+  bd: { file: src/components/StepIndicator.vue, skin: green active + green fills }
+  da: { file: src/components/StepIndicator.vue, skin: blue active + blue fills }
+
+- component: shell / phone-frame
+  master:
+    - fixed-height frame (100dvh; min(880px, 94dvh) + 28px radius + shadow,
+      centered on grey, at >=480px)
+    - header + step indicator pinned; single inner scroll region; route
+      change resets inner scroll to top
+  bd: { file: src/App.vue + src/style.css (.bdi-shell/.bdi-scroll) }
+  da: { file: src/App.vue + src/style.css (.da-shell/.da-scroll) }
+
+- component: sticky-bar (pre-quote)
+  master:
+    - docks to frame bottom; Back + Next; Next looks disabled when the step
+      is invalid but stays clickable and reveals field errors on click
+  bd: { file: src/components/StickyNext.vue, skin: white bar, green CTA }
+  da: { file: src/components/StickyNext.vue, skin: yellow CTA zone, green CTA }
+  differences:
+    - DA shows a running price earlier in its flow; BD shows no price before
+      Step 9 (BD quote lands at Step 9 per journey design)
+
+- component: sticky-bar (quote, expandable)
+  master:
+    - docks to frame bottom from the quote page onwards; collapsed row =
+      Back / running price / Next; notch toggle expands a price breakdown
+      that mirrors the quote card rows (KB-11); flex-spacer + position
+      sticky so it pins on both short and long pages
+  bd: { file: src/components/BdiQuoteFooter.vue + Step09 inline, skin: 40px circular white notch, green price }
+  da: { file: src/views/Step09YourQuote.vue quote-footer, skin: yellow zone }
+  differences:
+    - notch shape is brand-specific (BD circle per Figma 5269-3520)
+
+- component: select (bottom-sheet)
+  master:
+    - tapping the field slides a bottom sheet up from the frame foot; dimmed
+      backdrop covers the sticky bar; list scrolls inside the sheet;
+      optional in-sheet search; grouped options supported; selected option
+      accented; chevron rotates while open
+    - REPLACES anchored dropdown panels everywhere - anchored panels
+      collide with the sticky bar near the page bottom (the failure both
+      brands hit)
+  bd: { file: src/components/BdiSearchSelect.vue, skin: green accents, 8px radius, carbon backdrop }
+  da: { file: src/components/DaSearchSelect.vue, skin: blue accents, 4px radius, 2px open border }
+
+- component: text-input (floating label)
+  master:
+    - label sits in the field when empty; shrinks onto the top border (white
+      notch) when focused or filled - the field name never disappears
+    - error = red border + FieldError caption below, revealed only after a
+      blocked Next click
+  bd: { file: src/components/BdiFloatInput.vue (PrimeVue FloatLabel variant=on), skin: green focus border }
+  da: { file: per-view Material outlined pattern, skin: blue focus border }
+
+- component: date-field
+  master:
+    - DD/MM/YYYY numeric mask with live slash insertion; inline calendar
+      icon (not boxed); popup calendar; min/max range support
+  bd: { file: src/components/BdiDateField.vue, skin: green popup border }
+  da: { file: src/components/DaDateField.vue, skin: DA accents }
+
+- component: yes-no buttons / chip-row
+  master:
+    - equal-width tappable cards; selected = brand accent border; error =
+      red border on all options until one is picked
+    - chip arrays for AF/NAF follow KB-3 exactly (0-4+ / 0-5+) on BOTH brands
+  bd: { skin: green selected border }
+  da: { skin: blue/green per DA field spec }
+
+- component: demo-autofill
+  master:
+    - header product chip fires the current page's registered fill handler;
+      handlers only fill what a customer would type; prefilled-from-earlier
+      fields come from the real prefill chain
+  bd: { file: src/composables/useDemoAutofill.js }
+  da: { file: src/composables/useDemoAutofill.js }
+
+# --- Known brand DIVERGENCES that are intentional (never "fix" these) ---
+- divergence: NCD 60% tier is DA-only (KB-6); BD caps at 50%
+- divergence: Drive Less Pay Less + odometer capture are DA-only (KB-7)
+- divergence: brand fonts (BD Museo Sans / DA Montserrat) and accent systems
+    (BD green + red-for-logo-and-errors / DA blue + yellow zones)
+- divergence: BD quote page is Step 9 with Single/Instalment naming (KB-11,
+    KB-f1898394); check the DA flow's own step map before assuming symmetry
