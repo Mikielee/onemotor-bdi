@@ -19,8 +19,8 @@
  * policyholder (KB-4); CoM is asked at Step 7 for main + named drivers.
  */
 import { computed, reactive } from 'vue'
-import InputText from 'primevue/inputtext'
-import Select from 'primevue/select'
+import BdiFloatInput from '../components/BdiFloatInput.vue'
+import BdiSearchSelect from '../components/BdiSearchSelect.vue'
 import BdiDateField from '../components/BdiDateField.vue'
 import BdiQuoteFooter from '../components/BdiQuoteFooter.vue'
 import FieldError from '../components/FieldError.vue'
@@ -281,25 +281,21 @@ register(() => {
       <p class="form-title">Please tell us about the driver</p>
 
       <div class="field">
-        <InputText
+        <BdiFloatInput
           v-model="local.draft.name"
-          placeholder="Full name (as per NRIC)"
-          class="bdi-input"
-          :class="{ 'is-error': draftNameError }"
-          fluid
+          label="Full name (as per NRIC)"
+          :invalid="draftNameError"
         />
         <FieldError :show="draftNameError" message="Enter the driver's full name." />
       </div>
 
       <div class="field">
-        <InputText
+        <BdiFloatInput
           :model-value="local.draft.nric"
           @update:model-value="(v) => (local.draft.nric = (v || '').toUpperCase())"
-          placeholder="NRIC/FIN"
-          class="bdi-input"
-          :class="{ 'is-error': draftNricError }"
+          label="NRIC/FIN"
+          :invalid="draftNricError"
           maxlength="9"
-          fluid
         />
         <FieldError :show="draftNricError" message="Enter a valid NRIC or FIN." />
       </div>
@@ -336,30 +332,22 @@ register(() => {
       </div>
 
       <div class="field">
-        <Select
+        <BdiSearchSelect
           v-model="local.draft.maritalStatus"
           :options="maritalOptions"
-          option-label="label"
-          option-value="value"
           placeholder="Marital status"
-          class="bdi-select"
-          :class="{ 'is-error': draftMaritalError }"
-          fluid
+          :invalid="draftMaritalError"
         />
         <FieldError :show="draftMaritalError" message="Please select marital status." />
       </div>
 
       <div class="field stack">
         <label class="field-sublabel">Years of valid driving licence</label>
-        <Select
+        <BdiSearchSelect
           v-model="local.draft.yearsLicensed"
           :options="yearsLicensedOptions"
-          option-label="label"
-          option-value="value"
           placeholder=" "
-          class="bdi-select"
-          :class="{ 'is-error': draftYearsError }"
-          fluid
+          :invalid="draftYearsError"
         />
         <FieldError :show="draftYearsError" message="Please select years of valid driving licence." />
       </div>

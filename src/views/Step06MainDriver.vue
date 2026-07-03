@@ -6,7 +6,7 @@
  * downstream prefill chain (Step 10.1 identity, Step 12 prefill, Step 14 cards).
  */
 import { computed, reactive } from 'vue'
-import Select from 'primevue/select'
+import BdiSearchSelect from '../components/BdiSearchSelect.vue'
 import BdiDateField from '../components/BdiDateField.vue'
 import StickyNext from '../components/StickyNext.vue'
 import FieldError from '../components/FieldError.vue'
@@ -121,16 +121,12 @@ register(() => {
 
     <!-- Marital status -->
     <div class="field" :data-error="maritalError ? 'true' : null">
-      <Select
+      <BdiSearchSelect
         :model-value="local.maritalStatus"
         @update:model-value="onMaritalChange"
         :options="maritalOptions"
-        option-label="label"
-        option-value="value"
         placeholder="Marital status"
-        class="bdi-select"
-        :class="{ 'is-error': maritalError }"
-        fluid
+        :invalid="maritalError"
       />
       <FieldError :show="maritalError" message="Please select your marital status." />
     </div>

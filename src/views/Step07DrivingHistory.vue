@@ -6,7 +6,7 @@
  * (4+/5+ UW cut-offs — blocker pending, OD-4). NCD 60% tier is DA-only (KB-6).
  */
 import { computed, reactive } from 'vue'
-import Select from 'primevue/select'
+import BdiSearchSelect from '../components/BdiSearchSelect.vue'
 import StickyNext from '../components/StickyNext.vue'
 import FieldError from '../components/FieldError.vue'
 import { useQuote } from '../store/quote'
@@ -153,16 +153,12 @@ register(() => {
 
     <div class="field" :data-error="yearsError ? 'true' : null">
       <label class="field-label">Years of valid driving licence</label>
-      <Select
+      <BdiSearchSelect
         :model-value="local.yearsLicensed"
         @update:model-value="onYearsChange"
         :options="yearsOptions"
-        option-label="label"
-        option-value="value"
         placeholder=" "
-        class="bdi-select"
-        :class="{ 'is-error': yearsError }"
-        fluid
+        :invalid="yearsError"
       />
       <FieldError :show="yearsError" message="Please select years of driving experience." />
     </div>
@@ -228,16 +224,12 @@ register(() => {
       <p class="field-label">
         <strong>Policyholder's</strong> No Claim Discount (NCD) at renewal
       </p>
-      <Select
+      <BdiSearchSelect
         :model-value="local.ncd"
         @update:model-value="onNcdChange"
         :options="ncdOptions"
-        option-label="label"
-        option-value="value"
         placeholder=" "
-        class="bdi-select"
-        :class="{ 'is-error': ncdError }"
-        fluid
+        :invalid="ncdError"
       />
       <FieldError :show="ncdError" message="Please select your NCD at renewal." />
     </div>
@@ -245,16 +237,12 @@ register(() => {
     <!-- NCD = 0% follow-up -->
     <div v-if="showZeroFollowup" class="field" :data-error="zeroReasonError ? 'true' : null">
       <label class="field-label">NCD is 0% because</label>
-      <Select
+      <BdiSearchSelect
         :model-value="local.ncdZeroReason"
         @update:model-value="onZeroReasonChange"
         :options="ncdZeroReasonOptions"
-        option-label="label"
-        option-value="value"
         placeholder=" "
-        class="bdi-select"
-        :class="{ 'is-error': zeroReasonError }"
-        fluid
+        :invalid="zeroReasonError"
       />
       <FieldError :show="zeroReasonError" message="Please tell us why your NCD is 0%." />
     </div>
@@ -262,32 +250,24 @@ register(() => {
     <!-- NCD = 0% and NCD held on another car -->
     <div v-if="showOtherCar" class="field" :data-error="otherCarError ? 'true' : null">
       <label class="field-label">What is your NCD on the other car?</label>
-      <Select
+      <BdiSearchSelect
         :model-value="local.otherCarNcd"
         @update:model-value="onOtherCarNcdChange"
         :options="otherCarNcdOptions"
-        option-label="label"
-        option-value="value"
         placeholder=" "
-        class="bdi-select"
-        :class="{ 'is-error': otherCarError }"
-        fluid
+        :invalid="otherCarError"
       />
       <FieldError :show="otherCarError" message="Please select your NCD on the other car." />
     </div>
 
     <div v-if="showOtherCar" class="field" :data-error="transferredError ? 'true' : null">
       <label class="field-label">NCD transferred from</label>
-      <Select
+      <BdiSearchSelect
         :model-value="local.transferredFrom"
         @update:model-value="onTransferredChange"
         :options="transferredFromOptions"
-        option-label="label"
-        option-value="value"
         placeholder=" "
-        class="bdi-select"
-        :class="{ 'is-error': transferredError }"
-        fluid
+        :invalid="transferredError"
       />
       <FieldError :show="transferredError" message="Please select where your NCD is transferred from." />
     </div>

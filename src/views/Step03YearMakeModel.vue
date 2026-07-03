@@ -5,7 +5,7 @@
  * Spec: journey-spec/pages/step-03.yaml
  */
 import { computed, watch } from 'vue'
-import Select from 'primevue/select'
+import BdiSearchSelect from '../components/BdiSearchSelect.vue'
 import StickyNext from '../components/StickyNext.vue'
 import FieldError from '../components/FieldError.vue'
 import { useQuote } from '../store/quote'
@@ -123,15 +123,11 @@ const modelError = computed(() => showErrors.value && quote.carMake && !quote.ca
     <h1 class="bdi-section-title">Tell us about your car</h1>
 
     <div class="field" :data-error="yearError ? 'true' : null">
-      <Select
+      <BdiSearchSelect
         v-model="yearModel"
         :options="yearOptions"
-        option-label="label"
-        option-value="value"
         placeholder="Year"
-        class="bdi-select"
-        :class="{ 'is-error': yearError }"
-        fluid
+        :invalid="yearError"
       />
       <p v-if="restrictiveCover" class="field-hint">
         Third-party covers are available for cars up to {{ MAX_AGE_RESTRICTIVE }} years old.
@@ -140,37 +136,26 @@ const modelError = computed(() => showErrors.value && quote.carMake && !quote.ca
     </div>
 
     <div class="field" :data-error="makeError ? 'true' : null">
-      <Select
+      <BdiSearchSelect
         v-model="makeModel"
         :options="groupedMakes"
-        option-group-label="label"
-        option-group-children="items"
-        option-label="label"
-        option-value="value"
+        grouped
+        searchable
         :disabled="!quote.carYear"
         placeholder="Car brand"
-        class="bdi-select"
-        :class="{ 'is-error': makeError }"
-        :filter="true"
-        filter-placeholder="Search"
-        fluid
+        :invalid="makeError"
       />
       <FieldError :show="makeError" message="Select your car's brand." />
     </div>
 
     <div class="field" :data-error="modelError ? 'true' : null">
-      <Select
+      <BdiSearchSelect
         v-model="carModelV"
         :options="availableModels"
-        option-label="label"
-        option-value="value"
+        searchable
         :disabled="!quote.carMake"
         placeholder="Car model"
-        class="bdi-select"
-        :class="{ 'is-error': modelError }"
-        :filter="true"
-        filter-placeholder="Search"
-        fluid
+        :invalid="modelError"
       />
       <FieldError :show="modelError" message="Select your car's model." />
     </div>

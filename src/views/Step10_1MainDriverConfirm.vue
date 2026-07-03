@@ -14,8 +14,8 @@
  */
 import { computed, reactive } from 'vue'
 import { useRouter } from 'vue-router'
-import InputText from 'primevue/inputtext'
-import Select from 'primevue/select'
+import BdiFloatInput from '../components/BdiFloatInput.vue'
+import BdiSearchSelect from '../components/BdiSearchSelect.vue'
 import BdiDateField from '../components/BdiDateField.vue'
 import BdiQuoteFooter from '../components/BdiQuoteFooter.vue'
 import FieldError from '../components/FieldError.vue'
@@ -136,27 +136,23 @@ register(() => {
 
     <!-- Full name -->
     <div class="field" :data-error="nameError ? 'true' : null">
-      <InputText
+      <BdiFloatInput
         v-model="local.name"
         @update:model-value="sync"
-        placeholder="Full name (as per NRIC)"
-        class="bdi-input"
-        :class="{ 'is-error': nameError }"
-        fluid
+        label="Full name (as per NRIC)"
+        :invalid="nameError"
       />
       <FieldError :show="nameError" message="Enter the main driver's full name." />
     </div>
 
     <!-- NRIC/FIN -->
     <div class="field" :data-error="nricError ? 'true' : null">
-      <InputText
+      <BdiFloatInput
         :model-value="local.nric"
         @update:model-value="onNricInput"
-        placeholder="NRIC/FIN"
-        class="bdi-input"
-        :class="{ 'is-error': nricError }"
+        label="NRIC/FIN"
+        :invalid="nricError"
         maxlength="9"
-        fluid
       />
       <FieldError :show="nricError" message="Enter a valid NRIC or FIN." />
     </div>
@@ -196,16 +192,12 @@ register(() => {
 
     <!-- Marital status (prefilled from Step 6) -->
     <div class="field" :data-error="maritalError ? 'true' : null">
-      <Select
+      <BdiSearchSelect
         :model-value="local.maritalStatus"
         @update:model-value="onMaritalChange"
         :options="maritalOptions"
-        option-label="label"
-        option-value="value"
         placeholder="Marital status"
-        class="bdi-select"
-        :class="{ 'is-error': maritalError }"
-        fluid
+        :invalid="maritalError"
       />
       <FieldError :show="maritalError" message="Please confirm marital status." />
     </div>
@@ -213,16 +205,12 @@ register(() => {
     <!-- Years of valid driving licence (prefilled from Step 7) -->
     <div class="field stack" :data-error="yearsError ? 'true' : null">
       <label class="field-sublabel">Years of valid driving licence</label>
-      <Select
+      <BdiSearchSelect
         :model-value="local.yearsLicensed"
         @update:model-value="onYearsChange"
         :options="yearsLicensedOptions"
-        option-label="label"
-        option-value="value"
         placeholder=" "
-        class="bdi-select"
-        :class="{ 'is-error': yearsError }"
-        fluid
+        :invalid="yearsError"
       />
       <FieldError :show="yearsError" message="Please confirm years of valid driving licence." />
     </div>

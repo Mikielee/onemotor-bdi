@@ -20,8 +20,8 @@
  * Step 12 per Figma — they belong on Step 13 now (OMP-85).
  */
 import { computed, reactive, watch } from 'vue'
-import InputText from 'primevue/inputtext'
-import Select from 'primevue/select'
+import BdiFloatInput from '../components/BdiFloatInput.vue'
+import BdiSearchSelect from '../components/BdiSearchSelect.vue'
 import BdiDateField from '../components/BdiDateField.vue'
 import BdiQuoteFooter from '../components/BdiQuoteFooter.vue'
 import FieldError from '../components/FieldError.vue'
@@ -191,26 +191,22 @@ register(() => {
       <h2 class="block-title">Your Details</h2>
 
       <div class="field" :data-error="nameError ? 'true' : null">
-        <InputText
+        <BdiFloatInput
           v-model="local.fullName"
           @update:model-value="sync"
-          placeholder="Full name (as per NRIC)"
-          class="bdi-input"
-          :class="{ 'is-error': nameError }"
-          fluid
+          label="Full name (as per NRIC)"
+          :invalid="nameError"
         />
         <FieldError :show="nameError" message="Enter your full name as per NRIC." />
       </div>
 
       <div class="field" :data-error="nricError ? 'true' : null">
-        <InputText
+        <BdiFloatInput
           :model-value="local.nric"
           @update:model-value="onNricInput"
-          placeholder="NRIC/FIN"
-          class="bdi-input"
-          :class="{ 'is-error': nricError }"
+          label="NRIC/FIN"
+          :invalid="nricError"
           maxlength="9"
-          fluid
         />
         <FieldError :show="nricError" message="Enter a valid NRIC or FIN." />
       </div>
@@ -247,14 +243,12 @@ register(() => {
       </div>
 
       <div class="field" :data-error="emailError ? 'true' : null">
-        <InputText
+        <BdiFloatInput
           v-model="local.email"
           @update:model-value="sync"
-          placeholder="Email"
-          class="bdi-input"
-          :class="{ 'is-error': emailError }"
+          label="Email"
           type="email"
-          fluid
+          :invalid="emailError"
         />
         <FieldError :show="emailError" message="Enter a valid email address." />
       </div>
@@ -262,15 +256,14 @@ register(() => {
       <div class="field" :data-error="phoneError ? 'true' : null">
         <div class="phone-row">
           <div class="country-code">+65</div>
-          <InputText
+          <BdiFloatInput
             v-model="local.phone"
             @update:model-value="sync"
-            placeholder="Mobile"
-            class="bdi-input phone-input"
-            :class="{ 'is-error': phoneError }"
+            label="Mobile"
+            input-class="phone-input"
+            :invalid="phoneError"
             inputmode="numeric"
             maxlength="8"
-            fluid
           />
         </div>
         <FieldError :show="phoneError" message="Enter a valid SG mobile (8 digits, starts with 8 or 9)." />
@@ -278,16 +271,12 @@ register(() => {
 
       <div class="field stack" :data-error="ncdError ? 'true' : null">
         <label class="field-sublabel">No Claim Discount (NCD) at renewal</label>
-        <Select
+        <BdiSearchSelect
           :model-value="local.ncd"
           @update:model-value="onNcdChange"
           :options="ncdOptions"
-          option-label="label"
-          option-value="value"
           placeholder=" "
-          class="bdi-select"
-          :class="{ 'is-error': ncdError }"
-          fluid
+          :invalid="ncdError"
         />
         <FieldError :show="ncdError" message="Please select your NCD at renewal." />
       </div>
@@ -298,15 +287,13 @@ register(() => {
       <h2 class="block-title">Your Address</h2>
 
       <div class="field" :data-error="postalError ? 'true' : null">
-        <InputText
+        <BdiFloatInput
           :model-value="local.postalCode"
           @update:model-value="onPostalInput"
-          placeholder="Postal code"
-          class="bdi-input"
-          :class="{ 'is-error': postalError }"
+          label="Postal code"
+          :invalid="postalError"
           inputmode="numeric"
           maxlength="6"
-          fluid
         />
         <p class="autofill-hint">
           <i class="pi pi-pencil" aria-hidden="true"></i>
@@ -317,41 +304,33 @@ register(() => {
 
       <div v-if="postalValid" class="address-grid">
         <div class="field">
-          <InputText
+          <BdiFloatInput
             v-model="local.block"
             @update:model-value="sync"
-            placeholder="Block"
-            class="bdi-input"
-            fluid
+            label="Block"
           />
         </div>
         <div class="field">
-          <InputText
+          <BdiFloatInput
             v-model="local.street"
             @update:model-value="sync"
-            placeholder="Street"
-            class="bdi-input"
-            fluid
+            label="Street"
           />
         </div>
         <div class="field" :data-error="unitError ? 'true' : null">
-          <InputText
+          <BdiFloatInput
             v-model="local.unit"
             @update:model-value="sync"
-            placeholder="Unit number"
-            class="bdi-input"
-            :class="{ 'is-error': unitError }"
-            fluid
+            label="Unit number"
+            :invalid="unitError"
           />
           <FieldError :show="unitError" message="Please enter your unit number." />
         </div>
         <div class="field">
-          <InputText
+          <BdiFloatInput
             v-model="local.buildingName"
             @update:model-value="sync"
-            placeholder="Building name (optional)"
-            class="bdi-input"
-            fluid
+            label="Building name (optional)"
           />
         </div>
       </div>

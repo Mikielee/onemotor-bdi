@@ -8,7 +8,7 @@
  */
 import { computed, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import InputText from 'primevue/inputtext'
+import BdiFloatInput from '../components/BdiFloatInput.vue'
 import StickyNext from '../components/StickyNext.vue'
 import FieldError from '../components/FieldError.vue'
 import { useQuote } from '../store/quote'
@@ -106,26 +106,22 @@ register(() => {
 
     <div class="fields">
       <div class="field" :data-error="nameError ? 'true' : null">
-        <InputText
+        <BdiFloatInput
           v-model="local.preferredName"
           @update:model-value="sync"
-          placeholder="Preferred name"
-          class="bdi-input"
-          :class="{ 'is-error': nameError }"
-          fluid
+          label="Preferred name"
+          :invalid="nameError"
         />
         <FieldError :show="nameError" message="Enter your preferred name." />
       </div>
 
       <div class="field" :data-error="emailError ? 'true' : null">
-        <InputText
+        <BdiFloatInput
           v-model="local.email"
           @update:model-value="sync"
-          placeholder="Email"
-          class="bdi-input"
-          :class="{ 'is-error': emailError }"
+          label="Email"
           type="email"
-          fluid
+          :invalid="emailError"
         />
         <FieldError :show="emailError" message="Enter a valid email address." />
       </div>
@@ -133,15 +129,14 @@ register(() => {
       <div class="field" :data-error="phoneError ? 'true' : null">
         <div class="phone-row">
           <div class="country-code">+65</div>
-          <InputText
+          <BdiFloatInput
             v-model="local.phone"
             @update:model-value="sync"
-            placeholder="Mobile"
-            class="bdi-input phone-input"
-            :class="{ 'is-error': phoneError }"
+            label="Mobile"
+            input-class="phone-input"
+            :invalid="phoneError"
             inputmode="numeric"
             maxlength="8"
-            fluid
           />
         </div>
         <FieldError :show="phoneError" message="Enter a valid SG mobile (8 digits, starts with 8 or 9)." />

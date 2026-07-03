@@ -22,8 +22,8 @@
  * live elsewhere in the journey.
  */
 import { computed, reactive, ref, watch } from 'vue'
-import InputText from 'primevue/inputtext'
-import Select from 'primevue/select'
+import BdiFloatInput from '../components/BdiFloatInput.vue'
+import BdiSearchSelect from '../components/BdiSearchSelect.vue'
 import BdiQuoteFooter from '../components/BdiQuoteFooter.vue'
 import FieldError from '../components/FieldError.vue'
 import { useQuote } from '../store/quote'
@@ -235,55 +235,40 @@ register(() => {
 
     <div class="field stack" :data-error="makeError ? 'true' : null">
       <label class="field-sublabel">Car make</label>
-      <Select
+      <BdiSearchSelect
         v-model="local.carMake"
         @update:model-value="sync"
         :options="groupedMakes"
-        option-group-label="label"
-        option-group-children="items"
-        option-label="label"
-        option-value="value"
+        grouped
+        searchable
         placeholder="Choose car make"
-        class="bdi-select"
-        :class="{ 'is-error': makeError }"
-        :filter="true"
-        filter-placeholder="Search"
-        fluid
+        :invalid="makeError"
       />
       <FieldError :show="makeError" message="Please select your car make." />
     </div>
 
     <div class="field stack" :data-error="modelError ? 'true' : null">
       <label class="field-sublabel">Car model</label>
-      <Select
+      <BdiSearchSelect
         v-model="local.carModel"
         @update:model-value="sync"
         :options="modelOptions"
-        option-label="label"
-        option-value="value"
+        searchable
         :disabled="!local.carMake"
         placeholder="Choose car model"
-        class="bdi-select"
-        :class="{ 'is-error': modelError }"
-        :filter="true"
-        filter-placeholder="Search"
-        fluid
+        :invalid="modelError"
       />
       <FieldError :show="modelError" message="Please select your car model." />
     </div>
 
     <div class="field stack" :data-error="yearError ? 'true' : null">
       <label class="field-sublabel">Car registration year</label>
-      <Select
+      <BdiSearchSelect
         v-model="local.carYear"
         @update:model-value="sync"
         :options="yearOptions"
-        option-label="label"
-        option-value="value"
         placeholder="Choose year"
-        class="bdi-select"
-        :class="{ 'is-error': yearError }"
-        fluid
+        :invalid="yearError"
       />
       <FieldError :show="yearError" message="Please select your car registration year." />
     </div>
@@ -299,14 +284,12 @@ register(() => {
     <!-- VRM XOR Chassis -->
     <div class="field stack" :data-error="vrmError ? 'true' : null">
       <template v-if="!useChassis">
-        <InputText
+        <BdiFloatInput
           :model-value="local.registrationNumber"
           @update:model-value="onVrmInput"
-          placeholder="Vehicle Registration Number"
-          class="bdi-input"
-          :class="{ 'is-error': vrmError }"
+          label="Vehicle Registration Number"
+          :invalid="vrmError"
           maxlength="10"
-          fluid
         />
         <button
           type="button"
@@ -316,14 +299,12 @@ register(() => {
         <FieldError :show="vrmError" message="Enter your VRM (or use the chassis number link below)." />
       </template>
       <template v-else>
-        <InputText
+        <BdiFloatInput
           :model-value="local.chassisNumber"
           @update:model-value="onChassisInput"
-          placeholder="Chassis number"
-          class="bdi-input"
-          :class="{ 'is-error': vrmError }"
+          label="Chassis number"
+          :invalid="vrmError"
           maxlength="17"
-          fluid
         />
         <button
           type="button"
@@ -336,15 +317,11 @@ register(() => {
 
     <div class="field stack">
       <label class="field-sublabel">Current insurer <span class="optional">(optional)</span></label>
-      <Select
+      <BdiSearchSelect
         v-model="local.currentInsurer"
         @update:model-value="sync"
         :options="insurerOptions"
-        option-label="label"
-        option-value="value"
         placeholder="Choose your current insurer"
-        class="bdi-select"
-        fluid
       />
     </div>
 
@@ -374,16 +351,12 @@ register(() => {
       :data-error="fiError ? 'true' : null"
     >
       <label class="field-sublabel">Please select your financial institution</label>
-      <Select
+      <BdiSearchSelect
         v-model="local.financialInstitution"
         @update:model-value="sync"
         :options="financialInstitutionOptions"
-        option-label="label"
-        option-value="value"
         placeholder="Choose your financial institution"
-        class="bdi-select"
-        :class="{ 'is-error': fiError }"
-        fluid
+        :invalid="fiError"
       />
       <FieldError :show="fiError" message="Please select your financial institution." />
     </div>
