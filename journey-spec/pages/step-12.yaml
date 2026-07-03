@@ -54,11 +54,13 @@ fields:
     label: Postal code
     store: policyholder.address.postalCode
     required: true
-    validation: 6 digits
+    validation: 6 digits; EAGER - a malformed code errors on field blur, not
+      only on the Next click
     notes: postal code lives HERE, not Step 8 (decided 3 Jul 2026). Lookup autofills
       block + street + buildingName when the code is known (prototype stub for
-      OneMap; 078878 -> 10 Gopeng Street, Icon Residence). Unknown codes leave
-      address fields open for manual entry - never a block screen.
+      OneMap; 078878 -> 10 Gopeng Street, Icon Residence). Unknown codes clear the
+      autofillable fields and leave them open for manual entry - never a fake
+      autofill, never a block screen. Unit survives a postal change.
   - id: block / street
     store: policyholder.address.block / .street
     required: false
@@ -87,7 +89,10 @@ conditions:
   - when: mainDriver.isPolicyholder = false
     then: those fields land empty for manual capture
   - when: a valid 6-digit postal code is entered
-    then: address fields reveal; block/street/building autofill where known
+    then: address fields reveal; block/street/building autofill where known,
+      clear to empty for unknown codes (manual entry)
+  - when: the customer leaves the postal field with a malformed code typed
+    then: the postal error prompts immediately (eager validation)
 
 effects:
   - IDIT contact create/update fires when Next is clicked on this page (post-quote)

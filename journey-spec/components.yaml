@@ -97,6 +97,18 @@
   bd: { skin: green selected border }
   da: { skin: blue/green per DA field spec }
 
+- component: address-lookup
+  master:
+    - postal code field shows FIRST, alone; eager validation - a malformed code
+      errors on blur, not only on Next
+    - valid 6-digit code reveals Block / Street / Unit / Building fields;
+      known codes prefill block + street + building; unknown codes clear them
+      for manual entry (29 Jun 2026 contact meeting - no fake autofill, never
+      a block screen); unit is always manual and required
+    - postal stub lists mirrored between repos - keep in sync
+  bd: { file: src/views/Step12PolicyholderDetails.vue + src/utils/nric.js (lookupPostal) }
+  da: { file: src/views/Step12FinalisePay.vue + src/utils/postal.js }
+
 - component: demo-autofill
   master:
     - header product chip fires the current page's registered fill handler;

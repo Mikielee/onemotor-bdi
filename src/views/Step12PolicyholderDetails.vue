@@ -19,7 +19,7 @@
  * Car details (registration, insurer, last claim, ownership) moved out of
  * Step 12 per Figma — they belong on Step 13 now (OMP-85).
  */
-import { computed, reactive, watch } from 'vue'
+import { computed, reactive, ref, watch } from 'vue'
 import BdiFloatInput from '../components/BdiFloatInput.vue'
 import BdiSearchSelect from '../components/BdiSearchSelect.vue'
 import BdiDateField from '../components/BdiDateField.vue'
@@ -89,20 +89,27 @@ const ncdOptions = [
 const channels = ['Email', 'SMS', 'Whatsapp']
 
 // Postal code → auto-fill block + street + building name (where known).
-// Unit number is always manual.
+// Unknown codes clear the autofillable fields so the customer enters them
+// manually (29 Jun 2026 contact meeting — no fake autofill, no block screen).
+// Unit number is always manual and survives a postal change.
 watch(
   () => local.postalCode,
   (code) => {
     if (!code || code.length !== 6) return
     const hit = lookupPostal(code)
-    if (hit) {
-      local.block = hit.block
-      local.street = hit.street
-      if (hit.buildingName) local.buildingName = hit.buildingName
-    }
+    local.block = hit?.block || ''
+    local.street = hit?.street || ''
+    local.buildingName = hit?.buildingName || ''
     sync()
   },
 )
+
+// Eager postal validation: once the customer leaves the field with something
+// typed, a malformed code errors immediately instead of waiting for Next.
+const postalDirty = ref(false)
+function onPostalBlur() {
+  if (local.postalCode.length > 0) postalDirty.value = true
+}
 
 function sync() {
   mutable.policyholder = {
@@ -163,7 +170,9 @@ const genderError = computed(() => showErrors.value && !local.gender)
 const emailError = computed(() => showErrors.value && !emailValid.value)
 const phoneError = computed(() => showErrors.value && !phoneValid.value)
 const ncdError = computed(() => showErrors.value && local.ncd === null)
-const postalError = computed(() => showErrors.value && !postalValid.value)
+const postalError = computed(
+  () => (showErrors.value || postalDirty.value) && !postalValid.value,
+)
 const unitError = computed(() => showErrors.value && local.unit.trim().length === 0)
 
 // Sprint-review demo: sets postal 078878 (the watch then autofills
@@ -286,7 +295,7 @@ register(() => {
     <div class="block">
       <h2 class="block-title">Your Address</h2>
 
-      <div class="field" :data-error="postalError ? 'true' : null">
+      <div class="field" :data-error="postalError ? 'true' : null" @focusout="onPostalBlur">
         <BdiFloatInput
           :model-value="local.postalCode"
           @update:model-value="onPostalInput"

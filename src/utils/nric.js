@@ -37,6 +37,7 @@ export function validateNric(nric) {
 const postcodeStubs = {
   '049317': { street: 'Bayfront Avenue', block: '10', buildingName: '' },
   '238858': { street: 'Orchard Turn', block: '2', buildingName: 'ION Orchard' },
+  '238859': { street: 'Orchard Road', block: '1', buildingName: '' },
   '460999': { street: 'Bedok North Road', block: '419', buildingName: '' },
   '018989': { street: 'Marina View', block: '1', buildingName: 'Asia Square Tower 2' },
   '098632': { street: 'HarbourFront Walk', block: '1', buildingName: 'VivoCity' },
@@ -47,8 +48,9 @@ const postcodeStubs = {
 
 export function lookupPostal(code) {
   if (!/^\d{6}$/.test(code)) return null
-  if (postcodeStubs[code]) return postcodeStubs[code]
-  // Anything that's a valid 6-digit code but not in the stub: fall back to a
-  // placeholder that mimics what an API would return.
-  return { street: 'Sample Street', block: '—', buildingName: '' }
+  // Unknown-but-well-formed codes return null: per the 29 Jun 2026 contact
+  // meeting (Chou Wee), a code that doesn't match the postal list leaves the
+  // address fields empty for manual entry — never a fake autofill, never a
+  // block screen.
+  return postcodeStubs[code] || null
 }
