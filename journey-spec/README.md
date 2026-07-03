@@ -69,15 +69,18 @@ omit empty sections rather than writing `[]`.
 
 ## How the loops use this
 
-- **Story pipeline** (`/story-sync OMP-xxx`, planned): pulls the Notion story, the KB
-  rows and the Figma node, three-way diffs against this spec + the view code, and
+All three loops are live as workspace skills (in `<project>/skills/`):
+
+- **Story pipeline** (`skills/story-sync/`): pulls the Notion story, the KB rows
+  and the Figma node, three-way diffs against this spec + the view code, and
   emits an updated spec + US/Reqs/AC draft + discrepancy checklist.
-- **Decision impact scan** (planned, extends knowledge-base-sync): after a KB triage,
-  grep these files for the touched KB-/OD- ids to list affected pages and code.
-  Use a word-boundary pattern — `grep -lE "KB-9([^0-9]|$)"` — because plain
+- **Decision impact scan** (Step 4 of `skills/knowledge-base-sync/`): after a KB
+  triage, grep these files for the touched KB-/OD- ids to list affected pages and
+  code. Use a word-boundary pattern — `grep -lE "KB-9([^0-9]|$)"` — because plain
   `grep "KB-9"` also matches `KB-98cd9339`.
-- **Drift watch** (planned): Figma `last_modified_at` changes flag the page spec for
-  re-review.
+- **Drift watch** (`skills/drift-watch/`, report-only): Figma `last_modified_at`
+  changes + Notion Needs Sync rows flag the affected page specs for re-review;
+  follow-ups route to story-sync / knowledge-base-sync.
 
 ## Conventions
 
